@@ -1,4 +1,4 @@
-					Derivative Informed Neural Operator
+				Derivative Informed Neural Operator
 
 			     _____                      ___           ___     
 			    /  /::\       ___          /__/\         /  /\    
