@@ -13,3 +13,26 @@
 			                               \__\/         \__\/    
 
 		An Efficient Framework for High-Dimensional Parametric Derivative Learning
+
+			   _
+			 .~q`,
+			{__,  \
+			    \' \
+			     \  \
+			      \  \
+			       \  `._            __.__
+			        \    ~-._  _.==~~     ~~--.._
+			         \        '                  ~-.
+			          \      _-   -_                `.
+			           \    /       }        .-    .  \
+			            `. |      /  }      (       ;  \
+			              `|     /  /       (       :   '\
+			               \    |  /        |      /       \    =
+			                |     /`-.______.\     |^-.      \
+			                |   |/           (     |   `.      \_
+			                |   ||            ~\   \      '._    `-.._____..----.._=__
+			                |   |/             _\   \      =~-.__________.-~~~~~~~~~'''
+			              .o'___/            .o______}					
+
+[Dino art taken from here](https://www.asciiart.eu/animals/reptiles/dinosaurs)
+
