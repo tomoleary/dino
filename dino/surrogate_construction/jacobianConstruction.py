@@ -46,12 +46,6 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['batch_rank'] = 10
 	jacobian_settings['target_rank'] = 50
 	jacobian_settings['train_full_jacobian'] = False
-	jacobian_settings['nullspace_constraints'] = False
-	jacobian_settings['constraint_sketching'] = False
-	jacobian_settings['input_sketch_dim'] = None
-	jacobian_settings['output_sketch_dim'] = None
-	jacobian_settings['constraint_seed'] = 0 
-
 
 	# Neural network architecture settings
 	jacobian_settings['architecture'] = 'as_dense'
@@ -101,9 +95,12 @@ def jacobian_training_driver(settings,verbose = True):
 	'''
 	n_data = settings['train_data_size'] + settings['test_data_size']
 
-	data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
-		'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
-			'_nx'+str(settings['problem_settings']['nx'])+'/'
+	if settings['data_dir'] is None:
+		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
+			'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
+				'_nx'+str(settings['problem_settings']['nx'])+'/'
+	else: 
+		data_dir = settings['data_dir']
 
 
 	assert os.path.isdir(data_dir), 'Directory does not exist'+data_dir
@@ -168,24 +165,6 @@ def jacobian_training_driver(settings,verbose = True):
 		settings['opt_parameters']['train_full_jacobian'] = settings['train_full_jacobian']
 		regressor = equip_model_with_full_jacobian(regressor,name_prefix = settings['name_prefix'])
 		
-	elif settings['nullspace_constraints']:
-		print('Equipping nullspace constraint Jacobian')
-		settings['opt_parameters']['nullspace_constraints'] = settings['nullspace_constraints']
-		regressor = equip_model_with_jacobian_and_constraints(regressor,settings['batch_rank'],constraint_sketching = settings['constraint_sketching'],\
-			 input_sketch_dim = settings['input_sketch_dim'],output_sketch_dim = settings['output_sketch_dim'],name_prefix = settings['name_prefix'])
-		if settings['constraint_sketching']:
-			rQ = settings['output_sketch_dim']
-			rM = settings['input_sketch_dim']
-			zero_train = np.zeros((n_train,rQ,rM))
-			zero_test = np.zeros((n_test,rQ,rM))
-			train_dict['zero_matrix'] = zero_train
-			test_dict['zero_matrix'] = zero_test
-			constraint_state = np.random.RandomState(seed = settings['constraint_seed'])
-		else:
-			zero_train = np.zeros((n_train,dQ,dM))
-			zero_test = np.zeros((n_test,dQ,dM))
-			train_dict['zero_matrix'] = zero_train
-			test_dict['zero_matrix'] = zero_test
 	else:
 		regressor = equip_model_with_sketched_jacobian(regressor,settings['batch_rank'],name_prefix = settings['name_prefix'])
 
@@ -197,30 +176,6 @@ def jacobian_training_driver(settings,verbose = True):
 			if verbose:
 				print(('Running inner iteration '+str(epoch)).center(80))
 			train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'],order_random = True,burn_in = epoch)
-			if settings['nullspace_constraints']:
-				# Need to add the zero data here to train_dict
-				if settings['constraint_sketching']:
-					train_dict['zero_matrix'] = zero_train
-					test_dict['zero_matrix'] = zero_test
-					rQ = settings['output_sketch_dim']
-					rM = settings['input_sketch_dim']
-					# Could instead have many qrs at once
-					output_sketch,_ = np.linalg.qr(constraint_state.randn(dQ,rQ))
-					output_sketch_train = np.tile(output_sketch,(n_train,1,1))
-					output_sketch_test = np.tile(output_sketch,(n_test,1,1))
-					input_sketch,_ = np.linalg.qr(constraint_state.randn(dM,rM))
-					input_sketch_train = np.tile(input_sketch,(n_train,1,1))
-					input_sketch_test = np.tile(input_sketch,(n_test,1,1))
-
-					train_dict['left_sketch'] = output_sketch_train
-					train_dict['right_sketch'] = input_sketch_train
-					test_dict['left_sketch'] = output_sketch_test
-					test_dict['right_sketch'] = input_sketch_test
-					settings['opt_parameters']['constraint_sketching'] = True
-
-				else:
-					train_dict['zero_matrix'] = zero_train
-					test_dict['zero_matrix'] = zero_test
 			regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'],verbose = True)
 		pass
 	else:
@@ -330,92 +285,4 @@ def equip_model_with_full_jacobian(model,name_prefix = ''):
 
 	return new_model
 
-def equip_model_with_full_jacobian_and_right_nullspace(model,name_prefix = ''):
-	"""
-	"""
-	assert len(model.inputs) == 1
-	assert len(model.outputs) == 1
-	input_m = model.inputs[0]
-	output_q = model.outputs[0]
-	try:
-		input_dim = input_m.shape[-1].value
-		output_dim = output_q.shape[-1].value
-	except:
-		input_dim = input_m.shape[-1]
-		output_dim = output_q.shape[-1]
-
-	# Assuming here that V \in \mathbb{R}^{d_M \times d_Q}, because Jacobian has full rank 
-	# and d_Q < d_M
-	input_V = tf.keras.layers.Input(shape=(input_dim,output_dim),name=name_prefix+'_input_V')
-
-	with tf.GradientTape(persistent = True) as tape:
-		tape.watch(input_m)
-		qout = model(input_m)
-	# Full batched Jacobian
-	fullJ = tape.batch_jacobian(qout,input_m)
-
-	# Very important assumption is that V is orthonormal.
-	fullJV = tf.einsum('ijk,ikl->ijl',fullJ,input_V,name=name_prefix+'fullJV')
-	fullJVVT = tf.einsum('ijk,ilk->ijl',fullJV,input_V,name=name_prefix+'fullJVVT')
-
-	new_model = tf.keras.models.Model([input_m, input_V],[output_q,fullJ, fullJVVT])
-
-	return new_model
-
-
-def equip_model_with_jacobian_and_constraints(model,batch_rank,constraint_sketching = False,\
-								output_sketch_dim = None,input_sketch_dim = None,name_prefix = ''):
-	"""
-	"""
-	assert len(model.inputs) == 1
-	assert len(model.outputs) == 1
-	input_m = model.inputs[0]
-	output_q = model.outputs[0]
-	try:
-		input_dim = input_m.shape[-1].value
-		output_dim = output_q.shape[-1].value
-	except:
-		input_dim = input_m.shape[-1]
-		output_dim = output_q.shape[-1]
-
-	if constraint_sketching:
-		assert output_sketch_dim is not None
-		assert input_sketch_dim is not None
-		assert type(output_sketch_dim) is int
-		assert type(input_sketch_dim) is int
-		left_sketch = tf.keras.layers.Input(shape=(output_dim,output_sketch_dim),name=name_prefix+'_left_sketch')
-		right_sketch = tf.keras.layers.Input(shape=(input_dim,input_sketch_dim),name=name_prefix+'_right_sketch')
-
-
-	input_U = tf.keras.layers.Input(shape=(output_dim,batch_rank),name=name_prefix+'_input_U')
-	input_V = tf.keras.layers.Input(shape=(input_dim,batch_rank),name=name_prefix+'_input_V')
-
-	with tf.GradientTape(persistent = True) as tape:
-		tape.watch(input_m)
-		qout = model(input_m)
-	# Full batched Jacobian
-	fullJ = tape.batch_jacobian(qout,input_m)
-	# Right condition
-	fullJV = tf.einsum('ijk,ikl->ijl',fullJ,input_V)
-	fullJVVT = tf.einsum('ijk,ilk->ijl',fullJV,input_V)
-	right_condition = fullJ - fullJVVT
-	# Left condition
-	UTfullJ = tf.einsum('ijk,ijl->ikl',input_U,fullJ)
-	UUTfullJ = tf.einsum('ijk,ikl->ijl',input_U,UTfullJ)
-	left_condition = fullJ - UUTfullJ
-
-
-	# Singular value condition
-	UTfullJV = tf.einsum('ijk,ijl->ikl',input_U,fullJV)
-
-	if constraint_sketching:
-		left_condition = tf.einsum('ijk,ijl->ilk',left_condition,left_sketch)
-		left_condition = tf.einsum('ijk,ikl->ijl',left_condition,right_sketch)
-		right_condition = tf.einsum('ijk,ijl->ilk',right_condition,left_sketch)
-		right_condition = tf.einsum('ijk,ikl->ijl',right_condition,right_sketch)
-		new_model = tf.keras.models.Model([input_m,input_U,input_V,left_sketch,right_sketch], [output_q,UTfullJV,left_condition,right_condition])
-	else:
-		new_model = tf.keras.models.Model([input_m,input_U,input_V], [output_q,UTfullJV,left_condition,right_condition])
-
-	return new_model
 
