@@ -27,34 +27,34 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 	q_files = []
 	mq_files = []
 	for file in data_files:
-		if 'ms_on_rank_' in file:
+		if 'ms_on_proc_' in file:
 			m_files.append(file)
-		if 'qs_on_rank_' in file:
+		if 'qs_on_proc_' in file:
 			q_files.append(file)
-		if 'mq_on_rank' in file:
+		if 'mq_on_proc' in file:
 			mq_files.append(file)
 
 	if len(mq_files) == 0:
-		ranks = [int(file.split(data_dir+'ms_on_rank_')[-1].split('.npy')[0]) for file in m_files]
+		ranks = [int(file.split(data_dir+'ms_on_proc_')[-1].split('.npy')[0]) for file in m_files]
 	else:
-		ranks = [int(file.split(data_dir+'mq_on_rank')[-1].split('.npz')[0]) for file in mq_files]
+		ranks = [int(file.split(data_dir+'mq_on_proc')[-1].split('.npz')[0]) for file in mq_files]
 	max_rank = max(ranks)
 
 	# Serially concatenate data
 	if len(mq_files) == 0:
-		m_data = np.load(data_dir+'ms_on_rank_0.npy')
-		q_data = np.load(data_dir+'qs_on_rank_0.npy')
+		m_data = np.load(data_dir+'ms_on_proc_0.npy')
+		q_data = np.load(data_dir+'qs_on_proc_0.npy')
 		for i in range(1,max_rank+1):
-				appendage_m = np.load(data_dir+'ms_on_rank_'+str(i)+'.npy')
+				appendage_m = np.load(data_dir+'ms_on_proc_'+str(i)+'.npy')
 				m_data = np.concatenate((m_data,appendage_m))
-				appendage_q = np.load(data_dir+'qs_on_rank_'+str(i)+'.npy')
+				appendage_q = np.load(data_dir+'qs_on_proc_'+str(i)+'.npy')
 				q_data = np.concatenate((q_data,appendage_q))
 	else:
-		npz_data = np.load(data_dir+'mq_on_rank0.npz')
+		npz_data = np.load(data_dir+'mq_on_proc0.npz')
 		m_data = npz_data['m_data']
 		q_data = npz_data['q_data']
 		for i in range(1,max_rank+1):
-			npz_data = np.load(data_dir+'mq_on_rank'+str(i)+'.npz')
+			npz_data = np.load(data_dir+'mq_on_proc'+str(i)+'.npz')
 			appendage_m = npz_data['m_data']
 			appendage_q = npz_data['q_data']
 			m_data = np.concatenate((m_data,appendage_m))
@@ -77,40 +77,40 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 		V_files = []
 		J_files = []
 		for file in data_files:
-			if 'Us_on_rank_' in file:
+			if 'Us_on_proc_' in file:
 				U_files.append(file)
-			if 'sigmas_on_rank_' in file:
+			if 'sigmas_on_proc_' in file:
 				sigma_files.append(file)
-			if 'Vs_on_rank_' in file:
+			if 'Vs_on_proc_' in file:
 				V_files.append(file)
-			if 'J_on_rank' in file:
+			if 'J_on_proc' in file:
 				J_files.append(file)
 
 		if len(J_files) == 0:
-			ranks = [int(file.split(data_dir+'sigmas_on_rank_')[-1].split('.npy')[0]) for file in sigma_files]
+			ranks = [int(file.split(data_dir+'sigmas_on_proc_')[-1].split('.npy')[0]) for file in sigma_files]
 		else:
-			ranks = [int(file.split(data_dir+'J_on_rank')[-1].split('.npz')[0]) for file in J_files]
+			ranks = [int(file.split(data_dir+'J_on_proc')[-1].split('.npz')[0]) for file in J_files]
 		max_rank = max(ranks)
 
 		if len(J_files) == 0:
 			# Serially concatenate derivative data
-			U_data = np.load(data_dir+'Us_on_rank_0.npy')
-			sigma_data = np.load(data_dir+'sigmas_on_rank_0.npy')
-			V_data = np.load(data_dir+'Vs_on_rank_0.npy')
+			U_data = np.load(data_dir+'Us_on_proc_0.npy')
+			sigma_data = np.load(data_dir+'sigmas_on_proc_0.npy')
+			V_data = np.load(data_dir+'Vs_on_proc_0.npy')
 			for i in range(1,max_rank+1):
-				appendage_U = np.load(data_dir+'Us_on_rank_'+str(i)+'.npy')
+				appendage_U = np.load(data_dir+'Us_on_proc_'+str(i)+'.npy')
 				U_data = np.concatenate((U_data,appendage_U))
-				appendage_sigma = np.load(data_dir+'sigmas_on_rank_'+str(i)+'.npy')
+				appendage_sigma = np.load(data_dir+'sigmas_on_proc_'+str(i)+'.npy')
 				sigma_data = np.concatenate((sigma_data,appendage_sigma))
-				appendage_V = np.load(data_dir+'Vs_on_rank_'+str(i)+'.npy')
+				appendage_V = np.load(data_dir+'Vs_on_proc_'+str(i)+'.npy')
 				V_data = np.concatenate((V_data,appendage_V))
 		else:
-			Jnpz_data = np.load(data_dir+'J_on_rank0.npz')
+			Jnpz_data = np.load(data_dir+'J_on_proc0.npz')
 			U_data = Jnpz_data['U_data']
 			sigma_data = Jnpz_data['sigma_data']
 			V_data = Jnpz_data['V_data']
 			for i in range(1,max_rank+1):
-				Jnpz_data = np.load(data_dir+'J_on_rank'+str(i)+'.npz')
+				Jnpz_data = np.load(data_dir+'J_on_proc'+str(i)+'.npz')
 				appendage_U = Jnpz_data['U_data']
 				appendage_sigma = Jnpz_data['sigma_data']
 				appendage_V = Jnpz_data['V_data']
