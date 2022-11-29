@@ -90,11 +90,13 @@ def jacobian_network_settings(problem_settings):
 
 
 
-def jacobian_training_driver(settings,verbose = True):
+def jacobian_training_driver(settings, remapped_data = None, unflattened_data = None, verbose = True):
 	'''
 	'''
-	n_data = settings['train_data_size'] + settings['test_data_size']
-
+	for loss_weight in settings['opt_parameters']['loss_weights']:
+		assert loss_weight >= 0
+	################################################################################
+	# Set up training and testing data.
 	if settings['data_dir'] is None:
 		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
 			'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
@@ -102,36 +104,52 @@ def jacobian_training_driver(settings,verbose = True):
 	else: 
 		data_dir = settings['data_dir']
 
-
 	assert os.path.isdir(data_dir), 'Directory does not exist'+data_dir
-	for loss_weight in settings['opt_parameters']['loss_weights']:
-		assert loss_weight >= 0
+	if remapped_data is None:
+		if unflattened_data is None:
+			n_data = settings['train_data_size'] + settings['test_data_size']
+			all_data = load_data(data_dir,rescale = False,n_data = n_data,derivatives = True)
+			unflattened_train_dict, unflattened_test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
+		else:
+			if len(unflattened_data) == 1:
+				unflattened_train_dict = unflattened_data[0]
+				unflattened_test_dict = None
+			else:
+				unflattened_train_dict, unflattened_test_dict = unflattened_data
+		if settings['train_full_jacobian']:
+			train_dict = remap_jacobian_data(unflattened_train_dict)
+			if unflattened_test_dict is None:
+				test_dict = None
+			else:
+				test_dict = remap_jacobian_data(unflattened_test_dict)
+		else:
+			train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
+			if unflattened_test_dict is None:
+				test_dict = None
+			else:
+				test_dict = flatten_data(unflattened_test_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
 
-	all_data = load_data(data_dir,rescale = False,n_data = n_data,derivatives = True)
-
-	input_dim = all_data['m_data'].shape[-1]
-	output_dim = all_data['q_data'].shape[-1]
-	settings['input_dim'] = input_dim
-	settings['output_dim'] = output_dim
-
-
-	unflattened_train_dict, unflattened_test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
-	# If these assertions fail, then need to rethink the following logic
-	assert len(unflattened_train_dict['m_data'].shape) == 2
-	assert len(unflattened_train_dict['q_data'].shape) == 2
-	n_train,dM = unflattened_train_dict['m_data'].shape
-	n_test,dQ = unflattened_test_dict['q_data'].shape
-	
-
-	if settings['train_full_jacobian']:
-		train_dict = remap_jacobian_data(unflattened_train_dict)
-		test_dict = remap_jacobian_data(unflattened_test_dict)
 	else:
-		# Flatten training data
-		train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
-		# Flatten testing data
-		test_dict = flatten_data(unflattened_test_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
+		assert settings['train_full_jacobian']
+		if len(remapped_data) == 1:
+			train_dict = remapped_data[0]
+			test_dict = None
+		else:
+			train_dict, test_dict = remapped_data
 
+	# If these assertions fail, then need to rethink the following logic
+	assert len(train_dict['m_data'].shape) == 2
+	assert len(train_dict['q_data'].shape) == 2
+	n_train,dM = train_dict['m_data'].shape
+	if test_dict is not None:
+		n_test,dQ = test_dict['q_data'].shape
+	else:
+		n_test = 0
+		dQ = train_dict['q_data'].shape[-1]
+	settings['input_dim'] = dM
+	settings['output_dim'] = dQ
+	################################################################################
+	# Set up the neural networks
 	if settings['architecture'] in ['as_resnet','as_dense']:
 		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
 		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
@@ -147,11 +165,8 @@ def jacobian_training_driver(settings,verbose = True):
 		projector_dict['output'] = last_layer_weights
 	else:
 		projector_dict = None
-
-	################################################################################
-
 	regressor = choose_network(settings,projector_dict)
-
+	################################################################################
 	if settings['initial_guess_path'] is not None:
 		assert os.path.isfile(settings['initial_guess_path']), 'Trained weights may not exist as specified: '+str(settings['initial_guess_path'])
 		import pickle
@@ -168,7 +183,7 @@ def jacobian_training_driver(settings,verbose = True):
 	else:
 		regressor = equip_model_with_sketched_jacobian(regressor,settings['batch_rank'],name_prefix = settings['name_prefix'])
 
-
+	################################################################################
 	print('Commencing training'.center(80))
 	if settings['shuffle_every_epoch']:
 		settings['opt_parameters']['keras_epochs'] = settings['inner_epochs']

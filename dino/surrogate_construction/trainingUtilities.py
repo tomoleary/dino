@@ -90,7 +90,7 @@ def network_training_parameters():
 	return opt_parameters
 
 
-def train_h1_network(network,train_dict,test_dict,opt_parameters = network_training_parameters(),verbose = True):
+def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
@@ -115,27 +115,35 @@ def train_h1_network(network,train_dict,test_dict,opt_parameters = network_train
 
 	if opt_parameters['train_full_jacobian']:
 		input_train = [train_dict['m_data']]
-		input_test = [test_dict['m_data']]
 		output_train = [train_dict['q_data'],train_dict['J_data']]
-		output_test = [test_dict['q_data'],test_dict['J_data']]
+		if test_dict is None:
+			test_data = None
+		else:
+			input_test = [test_dict['m_data']]
+			output_test = [test_dict['q_data'],test_dict['J_data']]
+			test_data = (input_test,output_test)
 	else:
 		input_train = [train_dict['m_data'],train_dict['U_data'],train_dict['V_data']]
-		input_test = [test_dict['m_data'],test_dict['U_data'],test_dict['V_data']]
 		output_train = [train_dict['q_data'],train_dict['sigma_data']]
-		output_test = [test_dict['q_data'],test_dict['sigma_data']]
+		if test_dict is None:
+			test_data = None
+		else:
+			input_test = [test_dict['m_data'],test_dict['U_data'],test_dict['V_data']]
+			output_test = [test_dict['q_data'],test_dict['sigma_data']]
+			test_data = (input_test,output_test)
 
-		
 	if verbose:
 		eval_train = network.evaluate(input_train,output_train,verbose=2)
 		eval_train_dict = {out: eval_train[i] for i, out in enumerate(network.metrics_names)}
-		eval_test = network.evaluate(input_test,output_test,verbose=2)
-		eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 		print('Before training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
-		print('Before training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+		if test_dict is not None:
+			eval_test = network.evaluate(input_test,output_test,verbose=2)
+			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
+			print('Before training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 
 	if opt_parameters['train_keras']:
 		network.fit(input_train,output_train,
-					validation_data = (input_test,output_test),epochs = opt_parameters['keras_epochs'],\
+					validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
 										batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
 
 	if opt_parameters['train_hessianlearn']:
@@ -156,9 +164,11 @@ def train_h1_network(network,train_dict,test_dict,opt_parameters = network_train
 		problem = KMW.problem
 		hess_train_dict = {problem.x[0]:input_train[0],problem.x[1]:input_train[1],problem.x[2]:input_train[2],\
 								problem.y_true[0]:output_train[0],problem.y_true[1]:output_train[1]}
-		hess_val_dict = {problem.x[0]:input_test[0],problem.x[1]:input_test[1],problem.x[2]:input_test[2],\
-								problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
-
+		if test_dict is not None:
+			hess_val_dict = {problem.x[0]:input_test[0],problem.x[1]:input_test[1],problem.x[2]:input_test[2],\
+									problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
+		else:
+			hess_val_dict = None
 		data = hess.Data(hess_train_dict,opt_parameters['hess_gbatch_size'],\
 			validation_data = hess_val_dict,hessian_batch_size = opt_parameters['hess_batch_size'])
 		# And finally one can call fit!
@@ -174,7 +184,7 @@ def train_h1_network(network,train_dict,test_dict,opt_parameters = network_train
 
 	return network
 
-def train_l2_network(network,train_dict,test_dict,opt_parameters = network_training_parameters(),verbose = True):
+def train_l2_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
@@ -187,23 +197,29 @@ def train_l2_network(network,train_dict,test_dict,opt_parameters = network_train
 
 	input_train = train_dict['m_data']
 	output_train = train_dict['q_data']
-	input_test = test_dict['m_data']
-	output_test = test_dict['q_data']
+	if test_dict is None:
+		test_data = None
+	else:
+		input_test = test_dict['m_data']
+		output_test = test_dict['q_data']
+		test_data = (input_test,output_test)
 	if verbose:
 		l2_loss_train, l2_acc_train = network.evaluate(input_train,output_train,verbose=2)
 		print('Before training: l2 accuracy = ', l2_acc_train)
-		l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
-		print('Before training: l2accuracy = ', l2_acc_test)
+		if test_dict is not None:
+			l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
+			print('Before training: l2accuracy = ', l2_acc_test)
 
 	network.fit(input_train,output_train,
-				validation_data = (input_test,output_test),epochs = opt_parameters['keras_epochs'],\
+				validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
 									batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
 
 	if verbose:
 		l2_loss_train, l2_acc_train = network.evaluate(input_train,output_train,verbose=2)
 		print('After training: l2 accuracy = ', l2_acc_train)
-		l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
-		print('After training: l2accuracy = ', l2_acc_test)
+		if test_dict is not None:
+			l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
+			print('After training: l2accuracy = ', l2_acc_test)
 
 	return network
 
