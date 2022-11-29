@@ -45,8 +45,8 @@ def low_rank_layer(input_x,rank = 8,activation = 'softplus',name_prefix = None,z
 
 
 
-def projected_resnet(input_projector,last_layer_weights,ranks = [],\
-							trainable = False, name_prefix = ''):
+def projected_resnet(input_projector,last_layer_weights,ranks = [],compat_layer = False,\
+							first_layer_trainable = False, last_layer_trainable = True, name_prefix = ''):
 	"""
 	"""
 	input_dim,reduced_input_dim = input_projector.shape
@@ -78,6 +78,8 @@ def projected_resnet(input_projector,last_layer_weights,ranks = [],\
 
 	# If not handling a dimension mismatch before then do it here. 
 	# z = tf.keras.layers.Dense(reduced_output_dim)(z)
+	if compat_layer:
+		z = tf.keras.layers.Dense(reduced_output_dim,name = name_prefix+'output_compat_layer',use_bias = False)(z)
 
 	output_layer = tf.keras.layers.Dense(output_dim,name = name_prefix+'output_layer')(z)
 
@@ -85,10 +87,10 @@ def projected_resnet(input_projector,last_layer_weights,ranks = [],\
 
 	########################################################################
 	# Modify input layer by setting weights and setting trainable boolean
-	regressor.get_layer(name_prefix+'input_proj_layer').trainable =  trainable
+	regressor.get_layer(name_prefix+'input_proj_layer').trainable =  first_layer_trainable
 	regressor.get_layer(name_prefix+'input_proj_layer').set_weights([input_projector])
 
-	regressor.get_layer(name_prefix + 'output_layer').trainable =  True
+	regressor.get_layer(name_prefix + 'output_layer').trainable =  last_layer_trainable
 	regressor.get_layer(name_prefix + 'output_layer').set_weights(last_layer_weights)
 
 	return regressor
@@ -97,7 +99,7 @@ def projected_resnet(input_projector,last_layer_weights,ranks = [],\
 
 
 def projected_dense(input_projector,last_layer_weights,hidden_layer_dimensions = [],\
-		trainable = False, name_prefix = ''):
+				compat_layer = False, first_layer_trainable = False, last_layer_trainable = True, name_prefix = ''):
 	"""
 	"""
 	input_dim,reduced_input_dim = input_projector.shape
@@ -116,14 +118,18 @@ def projected_dense(input_projector,last_layer_weights,hidden_layer_dimensions =
 	z =  tf.keras.layers.Dense(reduced_input_dim,activation = 'softplus',name=name_prefix + 'dense_reduction_layer')(input_proj_layer)
 	for i,hidden_layer_dimension in enumerate(hidden_layer_dimensions):
 		z = tf.keras.layers.Dense(hidden_layer_dimension,activation = 'softplus',name = name_prefix+'inner_layer_'+str(i))(z)
+
+	if compat_layer:
+		z = tf.keras.layers.Dense(reduced_output_dim,name = name_prefix+'output_compat_layer',use_bias = False)(z)
+
 	output_layer = tf.keras.layers.Dense(output_dim,name = name_prefix + 'output_layer')(z)
 
 	regressor = tf.keras.models.Model(input_data,output_layer,name = 'output_proj_layer')
 
-	regressor.get_layer(name_prefix+'input_proj_layer').trainable =  trainable
+	regressor.get_layer(name_prefix+'input_proj_layer').trainable =  first_layer_trainable
 	regressor.get_layer(name_prefix+'input_proj_layer').set_weights([input_projector])
 
-	regressor.get_layer(name_prefix + 'output_layer').trainable =  True
+	regressor.get_layer(name_prefix + 'output_layer').trainable =  last_layer_trainable
 	regressor.get_layer(name_prefix + 'output_layer').set_weights(last_layer_weights)
 
 	return regressor
