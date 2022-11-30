@@ -177,10 +177,11 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	if verbose:
 		eval_train = network.evaluate(input_train,output_train,verbose=2)
 		eval_train_dict = {out: eval_train[i] for i, out in enumerate(network.metrics_names)}
-		eval_test = network.evaluate(input_test,output_test,verbose=2)
-		eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 		print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
-		print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+		if test_dict is not None:
+			eval_test = network.evaluate(input_test,output_test,verbose=2)
+			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
+			print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 
 	return network
 
