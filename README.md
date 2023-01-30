@@ -34,5 +34,9 @@
 			                |   |/             _\   \      =~-.__________.-~~~~~~~~~'''
 			              .o'___/            .o______}					
 
+[![DOI](https://zenodo.org/badge/506427906.svg)](https://zenodo.org/badge/latestdoi/506427906)
+
 [Dino art taken from here](https://www.asciiart.eu/animals/reptiles/dinosaurs)
+
+
 
