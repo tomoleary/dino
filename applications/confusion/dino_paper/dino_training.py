@@ -59,12 +59,7 @@ parser.add_argument("-target_rank", dest='target_rank',required=False, default =
 parser.add_argument("-batch_rank", dest='batch_rank',required=False, default = 50,  help="batch rank parameter used in sketching of Jacobian information",type=int)
 parser.add_argument("-l2_weight", dest='l2_weight',required=False, default = 1.,  help="weight for l2 term",type=float)
 parser.add_argument("-h1_weight", dest='h1_weight',required=False, default = 1.,  help="weight for h1 term",type=float)
-parser.add_argument("-left_weight", dest='left_weight',required=False, default = 1.,  help="weight for left optimization constraint",type=float)
-parser.add_argument("-right_weight", dest='right_weight',required=False, default = 1.,  help="weight for right optimization constraint",type=float)
-# Constraint sketching
-parser.add_argument("-constraint_sketching", dest='constraint_sketching',required=False, default = 0,  help="to constraint sketch or not",type=int)
-parser.add_argument("-output_sketch_dim", dest='output_sketch_dim',required=False, default = 50,  help="output sketching rank",type=int)
-parser.add_argument("-input_sketch_dim", dest='input_sketch_dim',required=False, default = 50,  help="input sketching rank",type=int)
+
 # Full J training
 parser.add_argument("-train_full_jacobian", dest='train_full_jacobian',required=False, default = 1,  help="full J",type=int)
 
