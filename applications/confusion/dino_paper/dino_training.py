@@ -75,6 +75,12 @@ problem_settings = confusion_problem_settings()
 
 settings = jacobian_network_settings(problem_settings)
 
+n_obs = 50
+gamma = 0.1
+delta = 0.5
+nx = 64
+settings['data_dir'] = '../data/confusion_n_obs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
+
 settings['target_rank'] = args.target_rank
 settings['batch_rank'] = args.batch_rank
 
@@ -88,14 +94,11 @@ settings['fixed_input_rank'] = args.fixed_input_rank
 settings['fixed_output_rank'] = args.fixed_output_rank
 settings['truncation_dimension'] = args.truncation_dimension
 
-settings['constraint_sketching'] = args.constraint_sketching
-settings['input_sketch_dim'] = args.input_sketch_dim
-settings['output_sketch_dim'] = args.output_sketch_dim
 
 settings['train_full_jacobian'] = args.train_full_jacobian
 
 
-if (settings['batch_rank'] == settings['target_rank']) and not settings['constraint_sketching']:
+if (settings['batch_rank'] == settings['target_rank']):
 	settings['outer_epochs'] = 1
 	settings['opt_parameters']['keras_epochs'] = args.total_epochs
 else:
@@ -104,20 +107,12 @@ else:
 	settings['opt_parameters']['keras_epochs'] = 1
 settings['opt_parameters']['keras_verbose'] = True
 
-if args.left_weight == 0. and args.right_weight == 0.:
-	print('Weights set to zero for zero conditions')
-	settings['opt_parameters']['loss_weights'] = [args.l2_weight,args.h1_weight]
-	settings['nullspace_constraints'] = False
-else:
-	print('Setting nullspace_constraints true')
-	settings['opt_parameters']['loss_weights'] = [args.l2_weight,args.h1_weight,args.left_weight,args.right_weight]
-	settings['nullspace_constraints'] = True
-	print('nullspace constraints = ',settings['nullspace_constraints'])
-	print('constraints sketching = ',settings['constraint_sketching'])
+settings['opt_parameters']['loss_weights'] = [args.l2_weight,args.h1_weight]
 
 settings['network_name'] = args.network_name
 
-
+if args.l2_weight != 1.0:
+	settings['network_name'] += 'l2_weight_'+str(args.l2_weight)
 
 
 jacobian_network = jacobian_training_driver(settings)
