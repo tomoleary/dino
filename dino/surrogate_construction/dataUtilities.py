@@ -18,7 +18,7 @@
 import numpy as np
 import os
 
-def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
+def load_data(data_dir,rescale = False,derivatives = False, n_data = None):
 	assert os.path.isdir(data_dir)
 	data_files = os.listdir(data_dir)
 	data_files = [data_dir + file for file in data_files]
@@ -60,8 +60,9 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 			m_data = np.concatenate((m_data,appendage_m))
 			q_data = np.concatenate((q_data,appendage_q))
       
-	if n_data < np.inf:
+	if n_data is not None:
 		assert type(n_data) is int
+		assert n_data <= m_data.shape[0], 'Requesting too much data, available number: '+str(m_data.shape[0])+', try again'
 		m_data = m_data[:n_data]
 		q_data = q_data[:n_data]
 	if rescale:
@@ -118,7 +119,7 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 				sigma_data = np.concatenate((sigma_data,appendage_sigma))
 				V_data = np.concatenate((V_data,appendage_V))
 
-		if n_data < np.inf:
+		if n_data is not None:
 			assert type(n_data) is int
 			U_data = U_data[:n_data]
 			sigma_data = sigma_data[:n_data]

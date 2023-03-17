@@ -19,6 +19,8 @@ from .dataUtilities import *
 
 from .jacobianConstruction import *
 
+from .jacobianTrainingDriver import *
+
 from .neuralNetworks import *
 
 from .neuralNetworkUtilities import *

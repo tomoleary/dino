@@ -69,6 +69,7 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['shuffle_every_epoch'] = False
 	jacobian_settings['outer_epochs'] = 50
 	jacobian_settings['inner_epochs'] = 1
+	jacobian_settings['reduced_training'] = False
 
 	# Data settings
 	jacobian_settings['test_data_size'] = 1024
@@ -87,168 +88,6 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['problem_settings'] = problem_settings
 
 	return jacobian_settings
-
-
-
-def jacobian_training_driver(settings, remapped_data = None, unflattened_data = None, verbose = True):
-	'''
-	'''
-	for loss_weight in settings['opt_parameters']['loss_weights']:
-		assert loss_weight >= 0
-	################################################################################
-	# Set up training and testing data.
-	if settings['data_dir'] is None:
-		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
-			'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
-				'_nx'+str(settings['problem_settings']['nx'])+'/'
-	else: 
-		data_dir = settings['data_dir']
-
-	assert os.path.isdir(data_dir), 'Directory does not exist'+data_dir
-	if remapped_data is None:
-		if unflattened_data is None:
-			n_data = settings['train_data_size'] + settings['test_data_size']
-			all_data = load_data(data_dir,rescale = False,n_data = n_data,derivatives = True)
-			unflattened_train_dict, unflattened_test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
-		else:
-			if len(unflattened_data) == 1:
-				unflattened_train_dict = unflattened_data[0]
-				unflattened_test_dict = None
-			else:
-				unflattened_train_dict, unflattened_test_dict = unflattened_data
-		if settings['train_full_jacobian']:
-			train_dict = remap_jacobian_data(unflattened_train_dict)
-			if unflattened_test_dict is None:
-				test_dict = None
-			else:
-				test_dict = remap_jacobian_data(unflattened_test_dict)
-		else:
-			train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
-			if unflattened_test_dict is None:
-				test_dict = None
-			else:
-				test_dict = flatten_data(unflattened_test_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'])
-
-	else:
-		assert settings['train_full_jacobian']
-		if len(remapped_data) == 1:
-			train_dict = remapped_data[0]
-			test_dict = None
-		else:
-			train_dict, test_dict = remapped_data
-
-	# If these assertions fail, then need to rethink the following logic
-	assert len(train_dict['m_data'].shape) == 2
-	assert len(train_dict['q_data'].shape) == 2
-	n_train,dM = train_dict['m_data'].shape
-	if test_dict is not None:
-		n_test,dQ = test_dict['q_data'].shape
-	else:
-		n_test = 0
-		dQ = train_dict['q_data'].shape[-1]
-	settings['input_dim'] = dM
-	settings['output_dim'] = dQ
-	################################################################################
-	# Set up the neural networks
-	if settings['architecture'] in ['as_resnet','as_dense']:
-		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
-		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
-										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
-
-
-		projectors = get_projectors(data_dir,fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
-
-		input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
-
-		projector_dict = {}
-		projector_dict['input'] = input_projector
-		projector_dict['output'] = last_layer_weights
-	else:
-		projector_dict = None
-	regressor = choose_network(settings,projector_dict)
-	################################################################################
-	if settings['initial_guess_path'] is not None:
-		assert os.path.isfile(settings['initial_guess_path']), 'Trained weights may not exist as specified: '+str(settings['initial_guess_path'])
-		import pickle
-		regressor_weights = pickle.load(open(settings['initial_guess_path'],'rb'))
-		for layer in regressor.layers:
-			layer.set_weights(regressor_weights[layer.name])
-		if settings['opt_parameters']['train_hessianlearn']:
-			settings['opt_parameters']['layer_weights'] = regressor_weights
-	if settings['train_full_jacobian']:
-		print('Equipping Jacobian')
-		settings['opt_parameters']['train_full_jacobian'] = settings['train_full_jacobian']
-		regressor = equip_model_with_full_jacobian(regressor,name_prefix = settings['name_prefix'])
-		
-	else:
-		regressor = equip_model_with_sketched_jacobian(regressor,settings['batch_rank'],name_prefix = settings['name_prefix'])
-
-	################################################################################
-	print('Commencing training'.center(80))
-	if settings['shuffle_every_epoch']:
-		settings['opt_parameters']['keras_epochs'] = settings['inner_epochs']
-		for epoch in range(settings['outer_epochs']):
-			if verbose:
-				print(('Running inner iteration '+str(epoch)).center(80))
-			train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'],order_random = True,burn_in = epoch)
-			regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'],verbose = True)
-		pass
-	else:
-		regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'])
-
-	if settings['save_weights']:
-		import pickle
-
-		jacobian_weights = {}
-		for layer in regressor.layers:
-			jacobian_weights[layer.name] = layer.get_weights()
-
-		os.makedirs(settings['weights_dir'],exist_ok = True)
-		if settings['network_name'] is None:
-			network_name = settings['name_prefix']+str(settings['architecture'])+'_depth'+str(settings['depth'])+\
-										'_batch_rank_'+str(settings['batch_rank'])
-		else:
-			network_name = settings['network_name']
-
-		jacobian_filename = settings['weights_dir']+network_name+'.pkl'
-		with open(jacobian_filename,'wb+') as f_jacobian:
-			pickle.dump(jacobian_weights,f_jacobian,pickle.HIGHEST_PROTOCOL)
-		
-
-	return regressor
-
-
-def jacobian_network_loader(settings,file_name = None):
-	"""
-	"""
-	if file_name is None:
-		file_name = settings['weights_dir']+settings['name_prefix']+str(settings['architecture'])+\
-			'_depth'+str(settings['depth'])+'_batch_rank_'+str(settings['batch_rank'])+'.pkl'
-
-	assert os.path.isfile(file_name), 'Trained weights may not exist as specified: '+str(file_name)
-
-	# jacobian_weights = pickle.load(open(file_name,'rb'))
-
-	try:
-		# import pickle
-		jacobian_weights = pickle.load(open(file_name,'rb'))
-	except:
-		import pickle5
-		jacobian_weights = pickle5.load(open(file_name,'rb'))
-
-	try:
-		projector_dict = {'input':jacobian_weights[settings['name_prefix']+'input_proj_layer'][0],\
-							 'output':jacobian_weights[settings['name_prefix']+'output_layer']}
-	except:
-		projector_dict = None
-
-	jacobian_network = choose_network(settings,projector_dict)
-
-	for layer in jacobian_network.layers:
-		layer.set_weights(jacobian_weights[layer.name])
-
-	return jacobian_network
-
 
 
 def equip_model_with_sketched_jacobian(model,batch_rank,name_prefix = ''):
@@ -300,4 +139,35 @@ def equip_model_with_full_jacobian(model,name_prefix = ''):
 
 	return new_model
 
+
+def jacobian_network_loader(settings,file_name = None):
+	"""
+	"""
+	if file_name is None:
+		file_name = settings['weights_dir']+settings['name_prefix']+str(settings['architecture'])+\
+			'_depth'+str(settings['depth'])+'_batch_rank_'+str(settings['batch_rank'])+'.pkl'
+
+	assert os.path.isfile(file_name), 'Trained weights may not exist as specified: '+str(file_name)
+
+	# jacobian_weights = pickle.load(open(file_name,'rb'))
+
+	try:
+		# import pickle
+		jacobian_weights = pickle.load(open(file_name,'rb'))
+	except:
+		import pickle5
+		jacobian_weights = pickle5.load(open(file_name,'rb'))
+
+	try:
+		projector_dict = {'input':jacobian_weights[settings['name_prefix']+'input_proj_layer'][0],\
+							 'output':jacobian_weights[settings['name_prefix']+'output_layer']}
+	except:
+		projector_dict = None
+
+	jacobian_network = choose_network(settings,projector_dict)
+
+	for layer in jacobian_network.layers:
+		layer.set_weights(jacobian_weights[layer.name])
+
+	return jacobian_network
 
