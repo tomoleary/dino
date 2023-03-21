@@ -20,24 +20,26 @@ import tensorflow as tf
 
 def projected_dense(input_projector = None,last_layer_weights = None,hidden_layer_dimensions = [],\
 				compat_layer = False, first_layer_trainable = False, last_layer_trainable = True, name_prefix = '',\
-				input_dim = None):
+				reduced_input_dim = None):
 	"""
 	"""
 	if input_projector is None:
-		input_data = tf.keras.layers.Input(shape=(input_dim,), name = name_prefix+'input_data')
+		input_data = tf.keras.layers.Input(shape=(reduced_input_dim,), name = name_prefix+'input_data')
 		input_proj_layer = input_data
 	else:
 		input_dim,reduced_input_dim = input_projector.shape
-		assert type(last_layer_weights) is list
-		assert len(last_layer_weights) == 2
-		reduced_output_dim, output_dim = last_layer_weights[0].shape
-		# Check shape interface conditions
-		assert len(last_layer_weights[1].shape) == 1
-		assert last_layer_weights[1].shape[0] == output_dim
-		assert hidden_layer_dimensions[-1] == reduced_output_dim
-
 		input_data = tf.keras.layers.Input(shape=(input_dim,), name = name_prefix+'input_data')
 		input_proj_layer = tf.keras.layers.Dense(reduced_input_dim,name = name_prefix+'input_proj_layer',use_bias = False)(input_data)
+
+	assert type(last_layer_weights) is list
+	assert len(last_layer_weights) == 2
+	reduced_output_dim, output_dim = last_layer_weights[0].shape
+	# Check shape interface conditions
+	assert len(last_layer_weights[1].shape) == 1
+	assert last_layer_weights[1].shape[0] == output_dim
+	assert hidden_layer_dimensions[-1] == reduced_output_dim
+
+		
 
 	z =  tf.keras.layers.Dense(reduced_input_dim,activation = 'softplus',name=name_prefix + 'dense_reduction_layer')(input_proj_layer)
 	for i,hidden_layer_dimension in enumerate(hidden_layer_dimensions):
@@ -48,7 +50,7 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 
 	output_layer = tf.keras.layers.Dense(output_dim,name = name_prefix + 'output_layer')(z)
 
-	regressor = tf.keras.models.Model(input_data,output_layer,name = 'output_proj_layer')
+	regressor = tf.keras.models.Model(input_data,output_layer)
 
 	if input_projector is not None:
 		regressor.get_layer(name_prefix+'input_proj_layer').trainable =  first_layer_trainable
@@ -106,24 +108,27 @@ def low_rank_layer(input_x,rank = 8,activation = 'softplus',name_prefix = None,z
 
 
 def projected_resnet(input_projector,last_layer_weights,ranks = [],compat_layer = False,\
-							first_layer_trainable = False, last_layer_trainable = True, name_prefix = ''):
+							first_layer_trainable = False, last_layer_trainable = True, name_prefix = '',\
+				reduced_input_dim = None):
 	"""
 	"""
-	input_dim,reduced_input_dim = input_projector.shape
+	if input_projector is None:
+		input_data = tf.keras.layers.Input(shape=(reduced_input_dim,), name = name_prefix+'input_data')
+		input_proj_layer = input_data
+	else:
+		input_dim,reduced_input_dim = input_projector.shape
+		input_data = tf.keras.layers.Input(shape=(input_dim,), name = name_prefix+'input_data')
+		input_proj_layer = tf.keras.layers.Dense(reduced_input_dim,name = name_prefix+'input_proj_layer',use_bias = False)(input_data)
+
 	assert type(last_layer_weights) is list
 	assert len(last_layer_weights) == 2
 	reduced_output_dim, output_dim = last_layer_weights[0].shape
 	# Check shape interface conditions
 	assert len(last_layer_weights[1].shape) == 1
 	assert last_layer_weights[1].shape[0] == output_dim
+	assert hidden_layer_dimensions[-1] == reduced_output_dim
 
-	
-	# input_dim, reduced_input_dim = input_projector.shape
-	# output_dim, reduced_output_dim = output_projector.shape
-
-	input_data = tf.keras.layers.Input(shape=(input_dim,),name = name_prefix+'network_input')
-
-	input_proj_layer = tf.keras.layers.Dense(reduced_input_dim,name = name_prefix+'input_proj_layer',use_bias = False)(input_data)
+		
 
 	z = input_proj_layer
 	# The question is whether or not to handle a possible dimension mismatch

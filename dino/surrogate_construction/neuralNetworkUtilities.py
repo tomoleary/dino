@@ -43,7 +43,7 @@ def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolera
 	return last_layer_weights
 
 
-def choose_network(settings,projector_dict = None):
+def choose_network(settings, projector_dict = None, reduced_training = False):
 	'''
 
 	'''
@@ -64,27 +64,39 @@ def choose_network(settings,projector_dict = None):
 		print('Loading AS ResNet'.center(80))
 
 		ranks = depth*[settings['layer_rank']]
-		input_projector = projector_dict['input']
-		layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
+		if reduced_training:
+			input_projector = None
+			assert settings['reduced_input_dim'] is not None
+			
+		else:
+			input_projector = projector_dict['input']
+			layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
+
+		reduced_input_dim = settings['reduced_input_dim']
 		last_layer_weights = projector_dict['output']
 		layer_weights[network_name_prefix+'output_layer'] = last_layer_weights
 		regressor, last_layer_weights = construct_projected_resnet(input_projector, last_layer_weights, ranks,\
-											  name_prefix = network_name_prefix)
+											  name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim)
 
-
-		# regressor.summary()
 
 	elif architecture == 'as_dense':
 		print(80*'#')
 		print('Loading AS Dense'.center(80))
 		hidden_layer_dimensions = 2*[truncation_dimension]
 
-		input_projector = projector_dict['input']
-		layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
+		if reduced_training:
+			input_projector = None
+			assert settings['reduced_input_dim'] is not None
+			
+		else:
+			input_projector = projector_dict['input']
+			layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
+
+		reduced_input_dim = settings['reduced_input_dim']
 		last_layer_weights = projector_dict['output']
 		layer_weights[network_name_prefix+'output_layer'] = last_layer_weights
 		regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, depth,\
-											 name_prefix = network_name_prefix)
+											 name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim)
 
 
 	elif architecture == 'generic_dense':
@@ -100,25 +112,26 @@ def choose_network(settings,projector_dict = None):
 	return regressor
 
 
-def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name_prefix = ''):
+def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name_prefix = '',reduced_input_dim = None):
 	"""
 	"""
 	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
 	# 									breadth_tolerance = breadth_tolerance,max_breadth = max_breadth)
 
-	pod_resnet = projected_resnet(input_projector,last_layer_weights,\
-									ranks = ranks,name_prefix = name_prefix)
+	pod_resnet = projected_resnet(input_projector = input_projector,last_layer_weights = last_layer_weights,\
+									ranks = ranks,name_prefix = name_prefix,reduced_input_dim = reduced_input_dim)
 
 	return pod_resnet, last_layer_weights
 
-def construct_projected_dense(input_projector, last_layer_weights, depth, name_prefix = ''):
+def construct_projected_dense(input_projector, last_layer_weights, depth, name_prefix = '',reduced_input_dim = None):
 	"""
 	"""
 	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
 	# 									breadth_tolerance = breadth_tolerance,max_breadth = max_breadth)
 	truncation_dimension = last_layer_weights[0].shape[0]
-	pod_dense_network = projected_dense(input_projector,last_layer_weights,\
-									hidden_layer_dimensions = depth*[truncation_dimension],name_prefix = name_prefix)
+	pod_dense_network = projected_dense(input_projector=input_projector	,last_layer_weights = last_layer_weights,\
+									hidden_layer_dimensions = depth*[truncation_dimension],name_prefix = name_prefix,\
+									reduced_input_dim = reduced_input_dim)
 
 	return pod_dense_network, last_layer_weights
 

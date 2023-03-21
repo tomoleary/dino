@@ -63,6 +63,8 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['input_dim'] = None
 	jacobian_settings['output_dim'] = None
 
+	jacobian_settings['reduced_input_dim'] = None
+
 
 	# Training parameters
 	jacobian_settings['opt_parameters'] = network_training_parameters()
