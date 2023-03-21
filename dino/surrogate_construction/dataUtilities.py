@@ -204,17 +204,17 @@ def modify_projectors(projectors,input_subspace,output_subspace):
 
 	if input_subspace in ['kle','as']:
 		# Always orthogonalize AS and KLE for best results
-		orthogonalize_input = True
-		rescale_input = True
+		
 		if input_subspace == 'kle':
 			input_projector = projectors['KLE']
 		elif input_subspace == 'as':
 			input_projector = projectors['AS_input']
 
-
+		orthogonalize_input = True
 		if orthogonalize_input:
 			input_projector,_ = np.linalg.qr(input_projector)
 
+		rescale_input = False
 		if rescale_input:
 			# Scaling factor of 10 seemed to perform well for KLE and AS
 			# and this was independent of the projector rank.
