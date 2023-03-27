@@ -220,7 +220,7 @@ def train_l2_network(network,train_dict,test_dict = None,opt_parameters = networ
 		print('After training: l2 accuracy = ', l2_acc_train)
 		if test_dict is not None:
 			l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
-			print('After training: l2accuracy = ', l2_acc_test)
+			print('After training: test l2 accuracy = ', l2_acc_test)
 
 	return network
 
