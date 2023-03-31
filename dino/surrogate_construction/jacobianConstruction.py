@@ -146,6 +146,35 @@ def equip_model_with_full_jacobian(model,name_prefix = ''):
 
 	return new_model
 
+def equip_model_with_output_reduced_jacobian(model,reduced_output_basis,name_prefix = ''):
+	"""
+	"""
+
+	assert len(model.inputs) == 1
+	assert len(model.outputs) == 1
+	input_m = model.inputs[0]
+	output_q = model.outputs[0]
+	try:
+		input_dim = input_m.shape[-1].value
+		output_dim = output_q.shape[-1].value
+	except:
+		input_dim = input_m.shape[-1]
+		output_dim = output_q.shape[-1]
+
+
+	with tf.GradientTape(persistent = True) as tape:
+		tape.watch(input_m)
+		qout = model(input_m)
+	# Full batched Jacobian
+	fullJ = tape.batch_jacobian(qout,input_m)
+	reduced_output_tensor = tf.constant(reduced_output_basis,dtype = output_q.dtype)
+
+	PhiTJ = tf.einsum('ij,kil->kjl',reduced_output_basis,fullJ)
+
+	new_model = tf.keras.models.Model(input_m,[output_q,PhiTJ])
+
+	return new_model
+
 
 def jacobian_network_loader(settings,file_name = None):
 	"""

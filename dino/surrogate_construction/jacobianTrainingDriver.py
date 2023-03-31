@@ -211,7 +211,8 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 
 
 def setup_the_dino(settings,train_dict,projector_dict = None,\
-				 reduced_input_training = False,reduced_output_training = False,no_jacobian = False):
+				 reduced_input_training = False,reduced_output_training = False,\
+				 no_jacobian = False,reduced_output_Jacobian = False):
 	################################################################################
 	# Set up the neural networks
 	regressor = choose_network(settings,projector_dict,reduced_input_training = reduced_input_training,\
@@ -231,7 +232,10 @@ def setup_the_dino(settings,train_dict,projector_dict = None,\
 	################################################################################
 	if not no_jacobian:
 		# Tease out the derivatives
-		if settings['train_full_jacobian']:
+		if reduced_output_Jacobian:
+			reduced_output_basis = projector_dict['output']
+			regressor = equip_model_with_output_reduced_jacobian(regressor,reduced_output_basis,name_prefix = settings['name_prefix'])
+		elif settings['train_full_jacobian']:
 			print('Equipping Jacobian')
 			settings['opt_parameters']['train_full_jacobian'] = settings['train_full_jacobian']
 			regressor = equip_model_with_full_jacobian(regressor,name_prefix = settings['name_prefix'])
@@ -287,7 +291,7 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 	# Setup a full re-stiched network 
 	regressor = setup_the_dino(settings,train_dict,projector_dict,\
 				reduced_input_training = False,reduced_output_training = False,\
-						no_jacobian = l2_only)
+						no_jacobian = l2_only, reduced_output_Jacobian = reduced_output_Jacobian)
 
 	big_network_layers = [layer.name for layer in regressor.layers]
 	little_network_layers = [layer.name for layer in reduced_regressor.layers]
@@ -306,18 +310,8 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 		metrics = [l2_accuracy]
 		loss_weights = [1.0]
 	else:
-		assert len(regressor.outputs) == 2
-		if reduced_output_Jacobian:
-			reduced_output_basis = projector_dict['output']
-			reduced_output_tensor = tf.constant(reduced_output_basis,dtype = regressor.outputs[0].dtype)
-			jacobian_loss = left_reduced_basis_normalized_mse_matrix(reduced_output_tensor)
-			jacobian_metric = left_reduced_basis_f_accuracy_matrix(reduced_output_tensor)
-		else:
-			jacobian_loss = normalized_mse_matrix
-			jacobian_metric = f_accuracy_matrix
-
-		losses = [normalized_mse]+[jacobian_loss]
-		metrics = [l2_accuracy]+[jacobian_metric]
+		losses = [normalized_mse]+[normalized_mse_matrix]
+		metrics = [l2_accuracy]+[f_accuracy_matrix]
 		loss_weights = opt_parameters['loss_weights']
 
 	regressor.compile(optimizer=optimizer,loss=losses,loss_weights = loss_weights,metrics=metrics)
@@ -335,9 +329,6 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 	else:
 		output_train = [train_dict['q_full'],train_dict['J_full']]
 		output_test = [test_dict['q_full'],test_dict['J_full']]
-
-	
-
 
 	eval_train = regressor.evaluate(input_train,output_train,verbose=2)
 

@@ -36,16 +36,16 @@ def normalized_mse_matrix(y_true, y_pred):
 								/tf.reduce_sum(tf.reduce_sum(tf.square(y_true),axis =-1),axis = -1)
 		return tf.reduce_mean(normalized_squared_difference)
 
-def left_reduced_basis_normalized_mse_matrix(left_reduced_basis):
-	assert len(left_reduced_basis.shape.as_list()) == 2, 'Only worked out for rank 2 tensors'
-	def left_sketched_normalized_mse(y_true,y_pred):
-		PhiTy_true = tf.einsum('ij,kil->kjl',left_reduced_basis,y_true)
-		PhiTy_pred = tf.einsum('ij,kil->kjl',left_reduced_basis,y_pred)
-		squared_difference = tf.square(PhiTy_pred - PhiTy_true)
-		normalized_squared_difference = tf.reduce_sum(tf.reduce_sum(squared_difference,axis=-1),axis=-1)\
-								/tf.reduce_sum(tf.reduce_sum(tf.square(PhiTy_true),axis =-1),axis = -1)
-		return tf.reduce_mean(normalized_squared_difference)
-	return left_sketched_normalized_mse
+# def left_reduced_basis_normalized_mse_matrix(left_reduced_basis):
+# 	assert len(left_reduced_basis.shape.as_list()) == 2, 'Only worked out for rank 2 tensors'
+# 	def left_sketched_normalized_mse(y_true,y_pred):
+# 		PhiTy_true = tf.einsum('ij,kil->kjl',left_reduced_basis,y_true)
+# 		PhiTy_pred = tf.einsum('ij,kil->kjl',left_reduced_basis,y_pred)
+# 		squared_difference = tf.square(PhiTy_pred - PhiTy_true)
+# 		normalized_squared_difference = tf.reduce_sum(tf.reduce_sum(squared_difference,axis=-1),axis=-1)\
+# 								/tf.reduce_sum(tf.reduce_sum(tf.square(PhiTy_true),axis =-1),axis = -1)
+# 		return tf.reduce_mean(normalized_squared_difference)
+# 	return left_sketched_normalized_mse
 
 
 def l2_accuracy(y_true, y_pred):
@@ -63,16 +63,23 @@ def f_accuracy_matrix(y_true, y_pred):
 	return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
 
 
-def left_reduced_basis_f_accuracy_matrix(left_reduced_basis):
-	assert len(left_reduced_basis.shape.as_list()) == 2, 'Only worked out for rank 2 tensors'
-	def left_sketched_f_accuracy_matrix(y_true,y_pred):
-		PhiTy_true = tf.einsum('ij,kil->kjl',left_reduced_basis,y_true)
-		PhiTy_pred = tf.einsum('ij,kil->kjl',left_reduced_basis,y_pred)
-		squared_difference = tf.square(PhiTy_pred - PhiTy_true)
-		normalized_squared_difference = tf.reduce_sum(tf.reduce_sum(squared_difference,axis=-1),axis=-1)\
-								/tf.reduce_sum(tf.reduce_sum(tf.square(PhiTy_true),axis =-1),axis = -1)
-		return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
-	return left_sketched_f_accuracy_matrix
+# def left_reduced_basis_f_accuracy_matrix(left_reduced_basis):
+# 	assert len(left_reduced_basis.shape.as_list()) == 2, 'Only worked out for rank 2 tensors'
+# 	for i in range(4):
+# 		print(80*'#')
+# 		print(left_reduced_basis.shape.as_list())
+# 	def left_sketched_f_accuracy_matrix(y_true,y_pred):
+# 		if len(y_true.shape.as_list()) == 2:
+# 			PhiTy_true = tf.einsum('ij,ki->kj',left_reduced_basis,y_true)
+# 			PhiTy_pred = tf.einsum('ij,ki->kj',left_reduced_basis,y_pred)
+# 		else:
+# 			PhiTy_true = tf.einsum('ij,kil->kjl',left_reduced_basis,y_true)
+# 			PhiTy_pred = tf.einsum('ij,kil->kjl',left_reduced_basis,y_pred)
+# 		squared_difference = tf.square(PhiTy_pred - PhiTy_true)
+# 		normalized_squared_difference = tf.reduce_sum(tf.reduce_sum(squared_difference,axis=-1),axis=-1)\
+# 								/tf.reduce_sum(tf.reduce_sum(tf.square(PhiTy_true),axis =-1),axis = -1)
+# 		return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
+# 	return left_sketched_f_accuracy_matrix
 
 def mol_normalized_mse(y_true, y_pred,eps = 1e-8):
 		squared_difference = tf.square(y_true - y_pred)
