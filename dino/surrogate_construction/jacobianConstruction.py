@@ -49,6 +49,7 @@ def jacobian_network_settings(problem_settings):
 
 	# Neural network architecture settings
 	jacobian_settings['architecture'] = 'as_dense'
+	jacobian_settings['compat_layer'] = True
 	jacobian_settings['depth'] = 6
 	jacobian_settings['truncation_dimension'] = 50
 	jacobian_settings['layer_rank'] = 8
@@ -71,7 +72,11 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['shuffle_every_epoch'] = False
 	jacobian_settings['outer_epochs'] = 50
 	jacobian_settings['inner_epochs'] = 1
-	jacobian_settings['reduced_training'] = False
+	jacobian_settings['reduced_input_training'] = False
+	jacobian_settings['reduced_output_training'] = False
+
+	jacobian_settings['reduced_input_dim'] = None
+	jacobian_settings['reduced_output_dim'] = None
 
 	# Data settings
 	jacobian_settings['test_data_size'] = 1024

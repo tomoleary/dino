@@ -96,7 +96,8 @@ settings['truncation_dimension'] = args.truncation_dimension
 
 settings['train_full_jacobian'] = args.train_full_jacobian
 
-settings['reduced_training'] = True
+settings['reduced_input_training'] = True
+settings['reduced_output_training'] = False
 
 
 if (settings['batch_rank'] == settings['target_rank']):

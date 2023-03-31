@@ -45,6 +45,7 @@ def observable_network_settings(problem_settings):
 	
 	# Neural network architecture settings
 	settings['architecture'] = 'as_dense'
+	settings['compat_layer'] = True
 	settings['depth'] = 6
 	settings['truncation_dimension'] = 50
 	settings['layer_rank'] = 8

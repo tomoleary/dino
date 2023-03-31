@@ -81,7 +81,7 @@ def get_the_data(settings, remapped_data = None, unflattened_data = None, verbos
 	return {'train_dict': train_dict, 'test_dict': test_dict,'settings':settings,\
 			'unflattened_train_dict':unflattened_train_dict}
 
-def setup_reduced_bases(settings,train_dict):
+def setup_reduced_bases(settings,train_dict,verbose = False):
 	if settings['architecture'] in ['as_resnet','as_dense']:
 		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
 		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
@@ -92,7 +92,7 @@ def setup_reduced_bases(settings,train_dict):
 		# Projectors are made orthonormal here
 		input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
 
-		if True:
+		if verbose:
 			print(80*'#')
 			print('Checking orthonormality'.center(80))
 			print('input_projector.shape = ',input_projector.shape)
@@ -110,49 +110,99 @@ def setup_reduced_bases(settings,train_dict):
 
 		projector_dict = {}
 		projector_dict['input'] = input_projector
-		projector_dict['output'] = last_layer_weights
+		projector_dict['output'] = last_layer_weights[0].T
+		projector_dict['last_layer_bias'] = last_layer_weights[1]
 	else:
 		projector_dict = None
 	return projector_dict
 
 
-def prune_the_data(projector_dict,train_dict,test_dict):
-	m_train = train_dict['m_data']
-	m_test = test_dict['m_data']
-	# Save the full data for re-stitching post-process
-	train_dict['m_full'] = m_train.copy()
-	test_dict['m_full'] = m_test.copy()
-
-	print('m_train.shape = ',m_train.shape)
-	print('m_test.shape = ',m_test.shape)
-	input_projector = projector_dict['input']
-	print('input_projector.shape = ',input_projector.shape)
-
-	m_train = np.einsum('ji,kj->ki',input_projector,m_train)
-	m_test = np.einsum('ji,kj->ki',input_projector,m_test)
-
-	print('m_train.shape = ',m_train.shape)
-	print('m_test.shape = ',m_test.shape)
-
-	J_train = train_dict['J_data']
-	J_test = test_dict['J_data']
-
+def prune_the_data(projector_dict,train_dict,test_dict,\
+	 input_pruning = True, output_pruning = True,verbose = False):
+	'''
+	'''
+	assert input_pruning or output_pruning
+	# Either way the J data gets pruned
+	J_output_already_pruned = False
+	if 'J_data' in train_dict.keys():
+		J_train = train_dict['J_data']
+		J_test = test_dict['J_data']
+	elif 'PhiTJ_data' in train_dict.keys():
+		J_train = train_dict['PhiTJ_data']
+		J_test = test_dict['PhiTJ_data']
+		J_output_already_pruned = True
+		print('Assuming that Jacobian already pruned wrt outputs!')
+	else:
+		raise
+	if verbose:
+		print('J_train.shape = ',J_train.shape)
+		print('J_test.shape = ',J_test.shape)
 	# Save the full data for re-stitching post-process
 	train_dict['J_full'] = J_train.copy()
 	test_dict['J_full'] = J_test.copy()
+	################################################################################
+	# m data
+	if input_pruning:
+		m_train = train_dict['m_data']
+		m_test = test_dict['m_data']
+		# Save the full data for re-stitching post-process
+		train_dict['m_full'] = m_train.copy()
+		test_dict['m_full'] = m_test.copy()
+		if verbose:
+			print('m_train.shape = ',m_train.shape)
+			print('m_test.shape = ',m_test.shape)
+		input_projector = projector_dict['input']
+		if verbose:
+			print('input_projector.shape = ',input_projector.shape)
+		assert input_projector.shape[0] == m_train.shape[1]
 
-	print('J_train.shape = ',J_train.shape)
-	print('J_test.shape = ',J_test.shape)
+		m_train = np.einsum('ji,kj->ki',input_projector,m_train)
+		m_test = np.einsum('ji,kj->ki',input_projector,m_test)
 
-	J_train = np.einsum('ji,klj->kli',input_projector,J_train)
-	J_test = np.einsum('ji,klj->kli',input_projector,J_test)
+		if verbose:
+			print('m_train.shape = ',m_train.shape)
+			print('m_test.shape = ',m_test.shape)
 
-	print('J_train.shape = ',J_train.shape)
-	print('J_test.shape = ',J_test.shape)
+			print('Pruning the input dimension on the J data')
 
+		J_train = np.einsum('ji,klj->kli',input_projector,J_train)
+		J_test = np.einsum('ji,klj->kli',input_projector,J_test)
+		if verbose:
+			print('J_train.shape = ',J_train.shape)
+			print('J_test.shape = ',J_test.shape)
 
-	train_dict['m_data'] = m_train
-	test_dict['m_data'] = m_test
+		train_dict['m_data'] = m_train
+		test_dict['m_data'] = m_test
+
+	if output_pruning:
+		q_train = train_dict['q_data']
+		q_test = test_dict['q_data']
+		# Save the full data for re-stitching post-process
+		train_dict['q_full'] = q_train.copy()
+		test_dict['q_full'] = q_test.copy()
+		if verbose:
+			print('q_train.shape = ',q_train.shape)
+			print('q_test.shape = ',q_test.shape)
+		output_projector = projector_dict['output']
+		last_layer_bias = projector_dict['last_layer_bias']
+		if verbose:
+			print('output_projector.shape = ',output_projector.shape)
+		assert output_projector.shape[0] == q_train.shape[1]
+
+		q_train = np.einsum('ji,kj->ki',output_projector,q_train - last_layer_bias)
+		q_test = np.einsum('ji,kj->ki',output_projector,q_test- last_layer_bias)
+
+		if J_output_already_pruned:
+			assert J_train.shape[1] == output_projector.shape[1]
+		else:
+			J_train = np.einsum('ji,kjl->kil',output_projector,J_train)
+			J_test = np.einsum('ji,kjl->kil',output_projector,J_test)
+			if verbose:
+				print('J_train.shape = ',J_train.shape)
+				print('J_test.shape = ',J_test.shape)
+
+		train_dict['q_data'] = q_train
+		test_dict['q_data'] = q_test
 
 	train_dict['J_data'] = J_train
 	test_dict['J_data'] = J_test
@@ -160,10 +210,12 @@ def prune_the_data(projector_dict,train_dict,test_dict):
 	return train_dict, test_dict
 
 
-def setup_the_dino(settings,train_dict,projector_dict = None, reduced_training = False):
+def setup_the_dino(settings,train_dict,projector_dict = None,\
+				 reduced_input_training = False,reduced_output_training = False,no_jacobian = False):
 	################################################################################
 	# Set up the neural networks
-	regressor = choose_network(settings,projector_dict,reduced_training = reduced_training)
+	regressor = choose_network(settings,projector_dict,reduced_input_training = reduced_input_training,\
+														reduced_output_training = reduced_output_training)
 
 	################################################################################
 	# Initial guess choice
@@ -177,14 +229,15 @@ def setup_the_dino(settings,train_dict,projector_dict = None, reduced_training =
 			settings['opt_parameters']['layer_weights'] = regressor_weights
 
 	################################################################################
-	# Tease out the derivatives
-	if settings['train_full_jacobian']:
-		print('Equipping Jacobian')
-		settings['opt_parameters']['train_full_jacobian'] = settings['train_full_jacobian']
-		regressor = equip_model_with_full_jacobian(regressor,name_prefix = settings['name_prefix'])
-		
-	else:
-		regressor = equip_model_with_sketched_jacobian(regressor,settings['batch_rank'],name_prefix = settings['name_prefix'])
+	if not no_jacobian:
+		# Tease out the derivatives
+		if settings['train_full_jacobian']:
+			print('Equipping Jacobian')
+			settings['opt_parameters']['train_full_jacobian'] = settings['train_full_jacobian']
+			regressor = equip_model_with_full_jacobian(regressor,name_prefix = settings['name_prefix'])
+			
+		else:
+			regressor = equip_model_with_sketched_jacobian(regressor,settings['batch_rank'],name_prefix = settings['name_prefix'])
 	
 	return regressor
 
@@ -194,6 +247,7 @@ def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict =
 	# Start the training
 	print('Commencing training'.center(80))
 	if settings['shuffle_every_epoch']:
+		assert unflattened_train_dict is not None
 		settings['opt_parameters']['keras_epochs'] = settings['inner_epochs']
 		for epoch in range(settings['outer_epochs']):
 			if verbose:
@@ -224,20 +278,19 @@ def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict =
 
 	return regressor
 
-def restitch_and_postprocess(reduced_regressor,settings,train_dict,test_dict,projector_dict):
+def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
+							test_dict,projector_dict,l2_only = False,\
+							reduced_output_Jacobian = False, verbose = False):
 	for i in range(5):
 		print(80*'#')
-	print('Re-stitched post processing')
-
+	print('Re-stitching post processing')
 	# Setup a full re-stiched network 
-	regressor = setup_the_dino(settings,train_dict,projector_dict,reduced_training = False)
-
+	regressor = setup_the_dino(settings,train_dict,projector_dict,\
+				reduced_input_training = False,reduced_output_training = False,\
+						no_jacobian = l2_only)
 
 	big_network_layers = [layer.name for layer in regressor.layers]
 	little_network_layers = [layer.name for layer in reduced_regressor.layers]
-
-	# print('big_network_layers = ',big_network_layers)
-	# print('little_network_layers = ',little_network_layers)
 
 	for layer in reduced_regressor.layers:
 		if layer.name in big_network_layers:
@@ -247,32 +300,63 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,test_dict,pro
 
 	opt_parameters = settings['opt_parameters']
 	optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
-	if opt_parameters['train_full_jacobian']:
-		assert len(regressor .outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
+	if l2_only:
+		assert len(regressor.outputs) == 1
+		losses = normalized_mse
+		metrics = [l2_accuracy]
+		loss_weights = [1.0]
 	else:
-		assert len(regressor .outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
+		assert len(regressor.outputs) == 2
+		if reduced_output_Jacobian:
+			reduced_output_basis = projector_dict['output']
+			reduced_output_tensor = tf.constant(reduced_output_basis,dtype = regressor.outputs[0].dtype)
+			jacobian_loss = left_reduced_basis_normalized_mse_matrix(reduced_output_tensor)
+			jacobian_metric = left_reduced_basis_f_accuracy_matrix(reduced_output_tensor)
+		else:
+			jacobian_loss = normalized_mse_matrix
+			jacobian_metric = f_accuracy_matrix
 
-	regressor.compile(optimizer=optimizer,loss=losses,loss_weights = opt_parameters['loss_weights'],metrics=metrics)
+		losses = [normalized_mse]+[jacobian_loss]
+		metrics = [l2_accuracy]+[jacobian_metric]
+		loss_weights = opt_parameters['loss_weights']
+
+	regressor.compile(optimizer=optimizer,loss=losses,loss_weights = loss_weights,metrics=metrics)
 
 	input_train = [train_dict['m_full']]
-	output_train = [train_dict['q_data'],train_dict['J_full']]
-
 	input_test = [test_dict['m_full']]
-	output_test = [test_dict['q_data'],test_dict['J_full']]
+
+	if not ('q_full' in train_dict.keys()):
+		train_dict['q_full'] = train_dict['q_data']
+		test_dict['q_full'] = test_dict['q_data']
+
+	if l2_only:
+		output_train = [train_dict['q_full']]
+		output_test = [test_dict['q_full']]
+	else:
+		output_train = [train_dict['q_full'],train_dict['J_full']]
+		output_test = [test_dict['q_full'],test_dict['J_full']]
+
+	
+
+
 	eval_train = regressor.evaluate(input_train,output_train,verbose=2)
-	eval_train_dict = {out: eval_train[i] for i, out in enumerate(regressor.metrics_names)}
-	print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
-	eval_test = regressor.evaluate(input_test,output_test,verbose=2)
-	eval_test_dict = {out: eval_test[i] for i, out in enumerate(regressor.metrics_names)}
-	print('eval_test_dict = ',eval_test_dict)
-	print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+
+	if l2_only:
+		l2_loss_train, l2_acc_train = regressor.evaluate(input_train,output_train,verbose=2)
+		print('After training: l2 accuracy = ', l2_acc_train)
+		l2_loss_test, l2_acc_test = regressor.evaluate(input_test,output_test,verbose=2)
+		print('After training: test l2 accuracy = ', l2_acc_test)
+	else:
+		eval_train_dict = {out: eval_train[i] for i, out in enumerate(regressor.metrics_names)}
+		print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
+		eval_test = regressor.evaluate(input_test,output_test,verbose=2)
+		eval_test_dict = {out: eval_test[i] for i, out in enumerate(regressor.metrics_names)}
+		if verbose:
+			print('eval_test_dict = ',eval_test_dict)
+		print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 
 	return regressor
-		
+	
 
 
 def jacobian_training_driver(settings, remapped_data = None, unflattened_data = None, verbose = True):
@@ -291,24 +375,29 @@ def jacobian_training_driver(settings, remapped_data = None, unflattened_data = 
 	# Setup the reduced bases (if it applies)
 	projector_dict = setup_reduced_bases(settings,train_dict)
 	# Prune the data here if desired...
-	if settings['reduced_training']:
+	if settings['reduced_input_training'] or settings['reduced_output_training']:
 		assert settings['train_full_jacobian']
 		assert settings['architecture'] in ['as_resnet','as_dense']
 		# Need to pass the reduced input dimension in for network construction
 		# The projector is assumed to have dims (dM,rM)
 		assert len(projector_dict['input'].shape) == 2
-		settings['reduced_input_dim'] = projector_dict['input'].shape[1]
-
-		print('reduced_input_dim = ',settings['reduced_input_dim'])
+		if settings['reduced_input_training']:
+			settings['reduced_input_dim'] = projector_dict['input'].shape[1]
+			print('reduced_input_dim = ',settings['reduced_input_dim'])
+		if settings['reduced_output_training']:
+			settings['reduced_output_dim'] = projector_dict['output'].shape[1]
+		
 
 		# Projector is also assumed to be orthonormal, this should maybe be checked / confirmed. 
-		train_dict, test_dict = prune_the_data(projector_dict,train_dict,test_dict)
+		train_dict, test_dict = prune_the_data(projector_dict,train_dict,test_dict,input_pruning = settings['reduced_input_training'],\
+																			output_pruning = settings['reduced_output_training'])
 
 	print('m train.shape = ',train_dict['m_data'].shape)
 	print('m test.shape = ',test_dict['m_data'].shape)
 	################################################################################
 	# Set up the neural networks
-	regressor = setup_the_dino(settings,train_dict,projector_dict,reduced_training = settings['reduced_training'])
+	regressor = setup_the_dino(settings,train_dict,projector_dict,reduced_input_training = settings['reduced_input_training'],\
+																	reduced_output_training = settings['reduced_output_training'])
 
 	################################################################################
 	# Start the training
@@ -316,7 +405,7 @@ def jacobian_training_driver(settings, remapped_data = None, unflattened_data = 
 
 	################################################################################
 	# Post-processing / re-stitching in the case of the reduced training.
-	if settings['reduced_training']:
+	if settings['reduced_input_training'] or settings['reduced_output_training']:
 		regressor = restitch_and_postprocess(regressor,settings,train_dict,test_dict,projector_dict)
 	
 	return regressor

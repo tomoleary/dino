@@ -45,7 +45,8 @@ parser.add_argument('-ninstance',dest = 'ninstance',required= False,default = 1,
 parser.add_argument('-nsubdomain',dest = 'nsubdomain',required= False,default = 1,help='number of partition',type = int)
 parser.add_argument('-sample_per',dest = 'sample_per',required= False,default = 4*64,help='number of samples per instance',type = int)
 parser.add_argument('-data_per_process',dest = 'data_per_process',required= False,default = 4*2048,help='number of data generated per instance',type = int)
-parser.add_argument('-as_rank',dest = 'as_rank',required= False,default = 100,help='rank for active subspace projectors',type = int)
+parser.add_argument('-as_rank',dest = 'as_rank',required= False,default = 512,help='rank for active subspace projectors,\
+																		 can always take fewer vectors after the fact.',type = int)
 parser.add_argument('-pod_rank',dest = 'pod_rank',required= False,default = 100,help='rank for POD projectors',type = int)
 parser.add_argument('-nx_targets',dest = 'nx_targets',required= False,default = 10,help='nx targets for observable',type = int)
 parser.add_argument('-ny_targets',dest = 'ny_targets',required= False,default = 5,help='ny targets for observable',type = int)
@@ -57,7 +58,7 @@ parser.add_argument('-formulation',dest = 'formulation',required=False,default =
 parser.add_argument('-save_data',dest = 'save_data',\
 					required= False,default = 0,help='boolean for saving of data',type = int)
 parser.add_argument('-save_jacobian_data',dest = 'save_jacobian_data',\
-					required= False,default = 1,help='boolean for saving of Jacobian data',type = int)
+					required= False,default = 0,help='boolean for saving of Jacobian data',type = int)
 parser.add_argument('-save_pod',dest = 'save_pod',\
 					required= False,default = 0,help='boolean for saving of POD projectors',type = int)
 parser.add_argument('-save_as',dest = 'save_as',\

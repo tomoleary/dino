@@ -46,9 +46,9 @@ from argparse import ArgumentParser
 parser = ArgumentParser(add_help=True)
 # Architectural parameters
 parser.add_argument("-architecture", dest='architecture',required=False, default = 'as_dense', help="architecture type: as_dense or generic_dense",type=str)
-parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 50, help="rank for input of AS network",type=int)
+parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 200, help="rank for input of AS network",type=int)
 parser.add_argument("-fixed_output_rank", dest='fixed_output_rank',required=False, default = 50, help="rank for output of AS network",type=int)
-parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 50, help="truncation dimension for low rank networks",type=int)
+parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 200, help="truncation dimension for low rank networks",type=int)
 parser.add_argument("-network_name", dest='network_name',required=True,  help="out name for the saved weights",type=str)
 
 # Optimization parameters
@@ -64,7 +64,7 @@ parser.add_argument("-h1_weight", dest='h1_weight',required=False, default = 1.,
 parser.add_argument("-train_full_jacobian", dest='train_full_jacobian',required=False, default = 1,  help="full J",type=int)
 
 
-parser.add_argument("-train_data_size", dest='train_data_size',required=False, default = 15*1024,  help="training data size",type=int)
+parser.add_argument("-train_data_size", dest='train_data_size',required=False, default = 7*1024,  help="training data size",type=int)
 parser.add_argument("-test_data_size", dest='test_data_size',required=False, default = 1024,  help="testing data size",type=int)
 
 args = parser.parse_args()
@@ -76,8 +76,8 @@ problem_settings = poisson_problem_settings()
 settings = jacobian_network_settings(problem_settings)
 
 n_obs = 50
-gamma = 0.1
-delta = 0.5
+gamma = 0.5
+delta = 2.5
 nx = 64
 settings['data_dir'] = '../data/poisson_n_obs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
 

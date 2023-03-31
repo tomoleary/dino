@@ -19,10 +19,11 @@ import tensorflow as tf
 
 
 def projected_dense(input_projector = None,last_layer_weights = None,hidden_layer_dimensions = [],\
-				compat_layer = False, first_layer_trainable = False, last_layer_trainable = True, name_prefix = '',\
-				reduced_input_dim = None):
+				compat_layer = True, first_layer_trainable = False, last_layer_trainable = False, name_prefix = '',\
+				reduced_input_dim = None,reduced_output_dim = None):
 	"""
 	"""
+	# Input reduced basis stuff
 	if input_projector is None:
 		input_data = tf.keras.layers.Input(shape=(reduced_input_dim,), name = name_prefix+'input_data')
 		input_proj_layer = input_data
@@ -31,12 +32,16 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 		input_data = tf.keras.layers.Input(shape=(input_dim,), name = name_prefix+'input_data')
 		input_proj_layer = tf.keras.layers.Dense(reduced_input_dim,name = name_prefix+'input_proj_layer',use_bias = False)(input_data)
 
-	assert type(last_layer_weights) is list
-	assert len(last_layer_weights) == 2
-	reduced_output_dim, output_dim = last_layer_weights[0].shape
-	# Check shape interface conditions
-	assert len(last_layer_weights[1].shape) == 1
-	assert last_layer_weights[1].shape[0] == output_dim
+	# Output reduced basis stuff
+	if last_layer_weights is not None:
+		assert type(last_layer_weights) is list
+		assert len(last_layer_weights) == 2
+		reduced_output_dim, output_dim = last_layer_weights[0].shape
+		# Check shape interface conditions
+		assert len(last_layer_weights[1].shape) == 1
+		assert last_layer_weights[1].shape[0] == output_dim
+	else:
+		assert reduced_output_dim is not None
 	assert hidden_layer_dimensions[-1] == reduced_output_dim
 
 		
@@ -48,7 +53,11 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 	if compat_layer:
 		z = tf.keras.layers.Dense(reduced_output_dim,name = name_prefix+'output_compat_layer',use_bias = False)(z)
 
-	output_layer = tf.keras.layers.Dense(output_dim,name = name_prefix + 'output_layer')(z)
+	if last_layer_weights is None:
+		assert compat_layer, print('In this case we need the compat layer')
+		output_layer = z
+	else:
+		output_layer = tf.keras.layers.Dense(output_dim,name = name_prefix + 'output_layer')(z)
 
 	regressor = tf.keras.models.Model(input_data,output_layer)
 
