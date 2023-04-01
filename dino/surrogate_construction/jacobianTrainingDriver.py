@@ -284,7 +284,8 @@ def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict =
 
 def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 							test_dict,projector_dict,l2_only = False,\
-							reduced_output_Jacobian = False, verbose = False):
+							reduced_output_Jacobian = False, verbose = False,\
+							logger = {}):
 	for i in range(5):
 		print(80*'#')
 	print('Re-stitching post processing')
@@ -334,9 +335,12 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 
 	if l2_only:
 		l2_loss_train, l2_acc_train = regressor.evaluate(input_train,output_train,verbose=2)
+
 		print('After training: l2 accuracy = ', l2_acc_train)
 		l2_loss_test, l2_acc_test = regressor.evaluate(input_test,output_test,verbose=2)
 		print('After training: test l2 accuracy = ', l2_acc_test)
+		logger['l2_train'] = l2_acc_train
+		logger['l2_test'] = l2_acc_test
 	else:
 		eval_train_dict = {out: eval_train[i] for i, out in enumerate(regressor.metrics_names)}
 		print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
@@ -345,6 +349,8 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 		if verbose:
 			print('eval_test_dict = ',eval_test_dict)
 		print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+		logger['l2_train'], logger['h1_train'] = eval_train[3], eval_train[6]
+		logger['l2_test'], logger['h1_test'] = eval_test[3], eval_test[6]
 
 	return regressor
 	
@@ -368,7 +374,6 @@ def jacobian_training_driver(settings, remapped_data = None, unflattened_data = 
 	# Prune the data here if desired...
 	if settings['reduced_input_training'] or settings['reduced_output_training']:
 		assert settings['train_full_jacobian']
-		assert settings['architecture'] in ['as_resnet','as_dense']
 		# Need to pass the reduced input dimension in for network construction
 		# The projector is assumed to have dims (dM,rM)
 		assert len(projector_dict['input'].shape) == 2

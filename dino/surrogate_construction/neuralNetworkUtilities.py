@@ -60,9 +60,13 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 	network_name_prefix = settings['name_prefix']
 
-	if architecture == 'as_resnet':
+	if architecture in ['as_resnet','kle_resnet']:
 		print(80*'#')
-		print('Loading AS ResNet'.center(80))
+		if 'kle' in architecture:
+			basis = 'KLE'
+		elif 'as' in architecture:
+			basis = 'AS'
+		print('Loading '+basis+' ResNet'.center(80))
 
 		ranks = depth*[settings['layer_rank']]
 
@@ -88,9 +92,13 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 											 reduced_output_dim = reduced_output_dim)
 
 
-	elif architecture == 'as_dense':
+	elif architecture in ['as_dense','kle_dense']:
 		print(80*'#')
-		print('Loading AS Dense'.center(80))
+		if 'kle' in architecture:
+			basis = 'KLE'
+		elif 'as' in architecture:
+			basis = 'AS'
+		print('Loading '+basis+' Dense'.center(80))
 		hidden_layer_dimensions = 2*[truncation_dimension]
 
 		if reduced_input_training:
@@ -125,6 +133,10 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		output_dim = settings['output_dim']
 		truncation_dimension = min(input_dim,output_dim)
 		regressor = generic_dense(input_dim,output_dim,depth*[truncation_dimension])
+
+	else:
+		print('Architecture: ',architecture,' not supported!')
+		raise
 
 	return regressor
 

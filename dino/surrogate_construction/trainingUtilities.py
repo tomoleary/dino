@@ -121,7 +121,7 @@ def network_training_parameters():
 	return opt_parameters
 
 
-def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
+def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True,logger = {}):
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
@@ -172,6 +172,7 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 			print('Before training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 
+
 	if opt_parameters['train_keras']:
 		network.fit(input_train,output_train,
 					validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
@@ -209,10 +210,12 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 		eval_train = network.evaluate(input_train,output_train,verbose=2)
 		eval_train_dict = {out: eval_train[i] for i, out in enumerate(network.metrics_names)}
 		print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
+		logger['l2_train'], logger['h1_train'] = eval_train[3],eval_train[6]
 		if test_dict is not None:
 			eval_test = network.evaluate(input_test,output_test,verbose=2)
 			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 			print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+			logger['l2_test'], logger['h1_test'] = eval_test[3],eval_test[6]
 
 	return network
 
