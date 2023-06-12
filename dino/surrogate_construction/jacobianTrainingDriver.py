@@ -82,7 +82,7 @@ def get_the_data(settings, remapped_data = None, unflattened_data = None, verbos
 			'unflattened_train_dict':unflattened_train_dict}
 
 def setup_reduced_bases(settings,train_dict,verbose = False):
-	if settings['architecture'] in ['as_resnet','as_dense']:
+	if settings['architecture'] in ['as_resnet','as_dense','kle_dense','kle_resnet']:
 		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
 		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
 										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])

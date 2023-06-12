@@ -140,33 +140,36 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 					kle_tolerance = 1e-4,pod_tolerance = 1e-4,\
 					 fixed_input_rank = 0, fixed_output_rank = 0, mixed_output = True, verbose = False):
 	projector_dictionary = {}
-	################################################################################
-	# Derivative Informed Input Subspace
-	AS_input_projector = np.load(data_dir+'AS_input_projector.npy')
-	if verbose:
-		print('AS input projector shape before truncation = ', AS_input_projector.shape)
-	if fixed_input_rank > 0:
-		AS_input_projector = AS_input_projector[:,:fixed_input_rank]
-	else:
-		AS_input_d = np.load(data_dir+'AS_d_GN.npy')
-		AS_input_projector = AS_input_projector[:,np.where(AS_input_d>as_input_tolerance)[0]]
-	if verbose:
-		print('AS input projector shape after truncation = ', AS_input_projector.shape)
-	projector_dictionary['AS_input'] = AS_input_projector
-	################################################################################
-	# Derivative Informed Output Subspace
-	AS_output_projector = np.load(data_dir+'AS_output_projector.npy')
-	
-	if verbose:
-		print('AS output projector shape before truncation = ', AS_output_projector.shape)
-	if fixed_output_rank > 0:
-		AS_output_projector = AS_output_projector[:,:fixed_output_rank]
-	else:
-		AS_output_d = np.load(data_dir+'AS_d_NG.npy')
-		AS_output_projector = AS_output_projector[:,np.where(AS_output_d>as_output_tolerance)[0]]
-	if verbose:
-		print('AS output projector shape after truncation = ', AS_output_projector.shape)
-	projector_dictionary['AS_output'] = AS_output_projector
+	try:
+		################################################################################
+		# Derivative Informed Input Subspace
+		AS_input_projector = np.load(data_dir+'AS_input_projector.npy')
+		if verbose:
+			print('AS input projector shape before truncation = ', AS_input_projector.shape)
+		if fixed_input_rank > 0:
+			AS_input_projector = AS_input_projector[:,:fixed_input_rank]
+		else:
+			AS_input_d = np.load(data_dir+'AS_d_GN.npy')
+			AS_input_projector = AS_input_projector[:,np.where(AS_input_d>as_input_tolerance)[0]]
+		if verbose:
+			print('AS input projector shape after truncation = ', AS_input_projector.shape)
+		projector_dictionary['AS_input'] = AS_input_projector
+		################################################################################
+		# Derivative Informed Output Subspace
+		AS_output_projector = np.load(data_dir+'AS_output_projector.npy')
+		
+		if verbose:
+			print('AS output projector shape before truncation = ', AS_output_projector.shape)
+		if fixed_output_rank > 0:
+			AS_output_projector = AS_output_projector[:,:fixed_output_rank]
+		else:
+			AS_output_d = np.load(data_dir+'AS_d_NG.npy')
+			AS_output_projector = AS_output_projector[:,np.where(AS_output_d>as_output_tolerance)[0]]
+		if verbose:
+			print('AS output projector shape after truncation = ', AS_output_projector.shape)
+		projector_dictionary['AS_output'] = AS_output_projector
+	except:
+		print('Active subspaces did not load')
 	try:
 		################################################################################
 		# KLE Input Subspace
@@ -181,6 +184,9 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 		if verbose:
 			print('KLE projector shape after truncation = ', KLE_projector.shape)
 		projector_dictionary['KLE'] = KLE_projector
+	except:
+		print('KLE did not load')
+	try:
 		################################################################################
 		# POD Output Subspace
 		POD_projector = np.load(data_dir+'POD_projector.npy')
@@ -195,7 +201,7 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 			print('POD projector shape after truncation = ', POD_projector.shape)
 		projector_dictionary['POD'] = POD_projector
 	except:
-		pass
+		print('Pre-computed POD did not load')
 	return projector_dictionary
 
 def modify_projectors(projectors,input_subspace,output_subspace):
@@ -230,7 +236,9 @@ def modify_projectors(projectors,input_subspace,output_subspace):
 	# Modify the output projectors
 	# It seems that (re)-orthogonalizing the POD vectors
 	# may not improve the neural network.
-	assert output_subspace in ['pod','as','random']
+	assert output_subspace in ['pod','as','random',None]
+	if output_subspace is None:
+		output_projector = None
 
 	if output_subspace in ['pod','as']:
 		orthogonalize_output = True
