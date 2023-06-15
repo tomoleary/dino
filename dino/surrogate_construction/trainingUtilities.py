@@ -136,7 +136,7 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	# Specify losses and metrics
 	losses = [normalized_mse]+[normalized_mse_matrix]
 	metrics = [l2_accuracy]+[f_accuracy_matrix]
-	
+
 	network.compile(optimizer=optimizer,loss=losses,loss_weights = opt_parameters['loss_weights'],metrics=metrics)
 	
 
@@ -244,7 +244,8 @@ def train_l2_network(network,train_dict,test_dict = None,opt_parameters = networ
 
 	network.fit(input_train,output_train,
 				validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
-									batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
+									batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'],\
+									callbacks = opt_parameters['callbacks'])
 
 	if verbose:
 		l2_loss_train, l2_acc_train = network.evaluate(input_train,output_train,verbose=2)
