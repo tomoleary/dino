@@ -117,6 +117,8 @@ def network_training_parameters():
 	opt_parameters['hess_sweeps'] = 10
 	opt_parameters['layer_weights'] = {}
 	opt_parameters['printing_sweep_frequency'] = 0.1
+
+	opt_parameters['callbacks'] = []
 	
 	return opt_parameters
 
@@ -128,19 +130,13 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 		optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
 	else:
 		raise 'Invalid choice of optimizer'
-	pass
 
 	assert len(opt_parameters['loss_weights']) == len(network.outputs)
+	assert len(network.outputs) == 2
+	# Specify losses and metrics
+	losses = [normalized_mse]+[normalized_mse_matrix]
+	metrics = [l2_accuracy]+[f_accuracy_matrix]
 	
-	if opt_parameters['train_full_jacobian']:
-		assert len(network.outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
-	else:
-		assert len(network.outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
-
 	network.compile(optimizer=optimizer,loss=losses,loss_weights = opt_parameters['loss_weights'],metrics=metrics)
 	
 
@@ -176,7 +172,8 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	if opt_parameters['train_keras']:
 		network.fit(input_train,output_train,
 					validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
-										batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
+										batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'],\
+										callbacks = opt_parameters['callbacks'])
 
 	if opt_parameters['train_hessianlearn']:
 		import sys,os
