@@ -142,7 +142,10 @@ def observable_network_loader(settings,file_name = None):
 
 	try:
 		projector_dict = {'input':observable_weights[settings['name_prefix']+'input_proj_layer'][0],\
-							 'output':observable_weights[settings['name_prefix']+'output_layer']}
+							 'output':observable_weights[settings['name_prefix']+'output_layer'][0].T,\
+							 'last_layer_bias':observable_weights[settings['name_prefix']+'output_layer'][1]}
+		print('output shape = ',projector_dict['output'].shape)
+		print('last layer bias  shape = ',projector_dict['last_layer_bias'].shape)
 	except:
 		projector_dict = {}
 

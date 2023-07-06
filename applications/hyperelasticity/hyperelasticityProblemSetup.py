@@ -32,7 +32,6 @@ import hippylib as hp
 sys.path.append( os.environ.get('HIPPYFLOW_PATH'))
 from hippyflow import *
 
-# from hyperelasticityModelSettings import *
 from hyperelasticityModelUtilities import *
 
 import pickle
@@ -64,7 +63,7 @@ parser.add_argument('-save_pod',dest = 'save_pod',\
 parser.add_argument('-save_as',dest = 'save_as',\
 					required= False,default = 1,help='boolean for saving of active subspace projectors',type = int)
 parser.add_argument('-save_kle',dest = 'save_kle',\
-					required= False,default = 1,help='boolean for saving of KLE projectors',type = int)
+					required= False,default = 0,help='boolean for saving of KLE projectors',type = int)
 parser.add_argument('-save_two_states',dest = 'save_two_states',\
 					required= False,default = 0,help='boolean for savign solution at mean and draw',type = int)
 parser.add_argument('-save_errors',dest = 'save_errors',\
