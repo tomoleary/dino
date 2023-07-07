@@ -23,6 +23,44 @@ from .dataUtilities import get_projectors, modify_projectors
 
 # Define procedures for defining networks via POD spectral decay here
 
+def setup_reduced_bases(settings,train_dict,verbose = False):
+	if settings['architecture'] in ['as_resnet','as_dense','kle_dense','kle_resnet']:
+		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
+		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
+										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
+
+		print('last_layer_weights[0].shape = ',last_layer_weights[0].shape)
+
+
+		projectors = get_projectors(settings['data_dir'],fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
+		# Projectors are made orthonormal here
+		input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
+
+		if verbose:
+			print(80*'#')
+			print('Checking orthonormality'.center(80))
+			print('input_projector.shape = ',input_projector.shape)
+			VTV = input_projector.T@input_projector
+			VVT = input_projector@input_projector.T
+			print(80*'#')
+			print('VVT = ',VVT)
+			print(80*'#')
+			print('np.linalg.norm(VVT) = ',np.linalg.norm(VVT))
+			print(80*'#')
+			print('VTV = ',VTV)
+			print(80*'#')
+			print('np.linalg.norm(VTV) = ',np.linalg.norm(VTV))
+
+
+		projector_dict = {}
+		projector_dict['input'] = input_projector
+		projector_dict['output'] = last_layer_weights[0].T
+		projector_dict['last_layer_bias'] = last_layer_weights[1]
+	else:
+		projector_dict = None
+		
+	return projector_dict
+
 def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolerance = 1e2, max_breadth = 10):
 	"""
 	"""
