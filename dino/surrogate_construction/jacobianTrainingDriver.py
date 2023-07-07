@@ -246,7 +246,7 @@ def setup_the_dino(settings,train_dict,projector_dict = None,\
 	return regressor
 
 
-def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict = None):
+def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict = None,verbose = True):
 	################################################################################
 	# Start the training
 	print('Commencing training'.center(80))

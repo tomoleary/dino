@@ -15,7 +15,12 @@ The command line arguments `-save_jacobian_data`, `-save_as` are set to `True` (
 
 ## 2. Training the neural networks
 
-The neural network scripts are all located in `dino_training/`. To run all neural network trainings used in the DINO paper, run `python training_runs.py`. Note that these runs may take very long, and were all run on a cluster with 1TB of RAM. The data are assumed to be loaded from a subfolder in `data/`. If this was moved somewhere else I suggest using symbolic links, (e.g., in bash `ln -s /path/to/moved/data/ data/`).
+The neural network scripts are all located in `dino_training/`. To run all neural network trainings used in the DINO paper, run
+
+ `python training_runs.py` 
+
+ Note that these runs may take very long, and were all run on a cluster with 1TB of RAM. The data are assumed to be loaded from a subfolder in `data/`. If this was moved somewhere else I suggest using symbolic links, (e.g., in bash `ln -s /path/to/moved/data/ data/`).
 
 
 ## 3. Evaluate the trained neural networks
+
