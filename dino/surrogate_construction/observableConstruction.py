@@ -114,7 +114,7 @@ def observable_training_driver(settings,verbose = True):
 
 		projector_dict = {}
 		projector_dict['input'] = input_projector
-		projector_dict['output'] = last_layer_weights
+		projector_dict['output'],projector_dict['last_layer_bias'] = last_layer_weights
 	else:
 		projector_dict = None
 

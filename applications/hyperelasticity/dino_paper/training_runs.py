@@ -57,14 +57,15 @@ ndatas = [16,64,256,1024,4096,8192-1024][:-1]
 
 ################################################################################
 # DIPNet training runs
-settings = default_settings()
-settings['architecture'] = 'as_dense'
-initial_name0 = 'DIPNet'
 
 rb_dims = [(100,50),(200,100)]
 
 for ndata in ndatas:
 	for rM, rQ in rb_dims:
+		settings = default_settings()
+		settings['architecture'] = 'as_dense'
+		initial_name0 = 'DIPNet'
+		# Specific to this loop
 		settings['train_data_size'] = ndata
 		settings['fixed_input_rank'] = rM
 		settings['fixed_output_rank'] = rQ
@@ -110,10 +111,12 @@ for ndata in ndatas:
 
 ################################################################################
 # Generic dense training runs
-settings = default_settings()
-settings['architecture'] = 'generic_dense'
-initial_name = 'generic_dense'
+
 for ndata in ndatas:
+	settings = default_settings()
+	settings['architecture'] = 'generic_dense'
+	initial_name = 'generic_dense'
+	# Specific to this loop
 	settings['train_data_size'] = ndata
 	# L2 training
 	settings['h1_weight'] = 0.0
