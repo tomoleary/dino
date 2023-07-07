@@ -37,8 +37,11 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 		assert type(last_layer_weights) is list
 		assert len(last_layer_weights) == 2
 		reduced_output_dim, output_dim = last_layer_weights[0].shape
+		print('last_layer_weights[0].shape = ',last_layer_weights[0].shape)
 		# Check shape interface conditions
 		assert len(last_layer_weights[1].shape) == 1
+		print('last_layer_weights[1].shape[0] = ', last_layer_weights[1].shape[0])
+		print('output_dim = ',output_dim)
 		assert last_layer_weights[1].shape[0] == output_dim
 	else:
 		assert reduced_output_dim is not None

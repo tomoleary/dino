@@ -87,6 +87,8 @@ def setup_reduced_bases(settings,train_dict,verbose = False):
 		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
 										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
 
+		print('last_layer_weights[0].shape = ',last_layer_weights[0].shape)
+
 
 		projectors = get_projectors(settings['data_dir'],fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
 		# Projectors are made orthonormal here

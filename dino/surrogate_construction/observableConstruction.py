@@ -104,9 +104,9 @@ def observable_training_driver(settings,verbose = True):
 
 	if settings['architecture'] in ['as_resnet','as_dense']:
 		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
+
 		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
 										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
-
 
 		projectors = get_projectors(data_dir,fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
 
@@ -114,7 +114,8 @@ def observable_training_driver(settings,verbose = True):
 
 		projector_dict = {}
 		projector_dict['input'] = input_projector
-		projector_dict['output'],projector_dict['last_layer_bias'] = last_layer_weights
+		projector_dict['output'] = last_layer_weights[0].T
+		projector_dict['last_layer_bias'] = last_layer_weights[1]
 	else:
 		projector_dict = None
 
@@ -149,8 +150,6 @@ def observable_network_loader(settings,file_name = None):
 		projector_dict = {'input':observable_weights[settings['name_prefix']+'input_proj_layer'][0],\
 							 'output':observable_weights[settings['name_prefix']+'output_layer'][0].T,\
 							 'last_layer_bias':observable_weights[settings['name_prefix']+'output_layer'][1]}
-		print('output shape = ',projector_dict['output'].shape)
-		print('last layer bias  shape = ',projector_dict['last_layer_bias'].shape)
 	except:
 		projector_dict = {}
 

@@ -26,8 +26,7 @@ from .dataUtilities import get_projectors, modify_projectors
 def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolerance = 1e2, max_breadth = 10):
 	"""
 	"""
-	U, s, _ = np.linalg.svd((data_dict['output_train']-np.mean(data_dict['output_train'],axis=0)).T,\
-							full_matrices = False)
+	full_matrices = False
 	if truncation_dimension is None:
 		orders_reduction = np.array([s[0]/(si+1e-12) for si in s])
 		# Absolute tolerance for breadth
@@ -36,6 +35,11 @@ def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolera
 		truncation_dimension = min(abs_tol_idx,max_breadth)
 	else:
 		assert type(truncation_dimension) is int
+		if min(data_dict['output_train'].shape) < truncation_dimension:
+			full_matrices = True
+
+	U, s, _ = np.linalg.svd((data_dict['output_train']-np.mean(data_dict['output_train'],axis=0)).T,\
+							full_matrices = full_matrices)
 
 	U = U[:,:truncation_dimension]
 	last_layer_weights = [U.T,np.mean(data_dict['output_train'], axis=0)]
