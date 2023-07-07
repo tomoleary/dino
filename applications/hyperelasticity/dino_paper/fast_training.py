@@ -98,6 +98,7 @@ settings['fixed_output_rank'] = args.fixed_output_rank
 settings['truncation_dimension'] = args.truncation_dimension
 
 settings['train_full_jacobian'] = args.train_full_jacobian
+settings['opt_parameters']['train_full_jacobian'] = args.train_full_jacobian
 
 settings['reduced_input_training'] = True
 settings['reduced_output_training'] = False

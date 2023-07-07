@@ -92,6 +92,7 @@ settings['fixed_output_rank'] = args.fixed_output_rank
 settings['truncation_dimension'] = args.fixed_input_rank
 
 settings['train_full_jacobian'] = args.train_full_jacobian
+settings['opt_parameters']['train_full_jacobian'] = args.train_full_jacobian
 
 
 if (settings['batch_rank'] == settings['target_rank']):
