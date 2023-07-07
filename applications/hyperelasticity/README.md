@@ -19,8 +19,13 @@ The neural network scripts are all located in `dino_training/`. To run all neura
 
  `python training_runs.py` 
 
- Note that these runs may take very long, and were all run on a cluster with 1TB of RAM. The data are assumed to be loaded from a subfolder in `data/`. If this was moved somewhere else I suggest using symbolic links, (e.g., in bash `ln -s /path/to/moved/data/ data/`).
+ Note that these runs may take very long, and were all run on a cluster with 1TB of RAM. The data are assumed to be loaded from a subfolder in `data/`. If this was moved somewhere else I suggest using symbolic links, (e.g., in bash `ln -s /path/to/moved/data/ data/`). 
+
+ When these runs finish they will output trained weights (as pickled dictionaries) to a folder `trained_weights/` within the `dino_training/` directory.
 
 
 ## 3. Evaluate the trained neural networks
+
+
+
 

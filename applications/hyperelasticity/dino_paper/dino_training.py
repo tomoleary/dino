@@ -111,7 +111,11 @@ settings['network_name'] = args.network_name
 if args.l2_weight != 1.0:
 	settings['network_name'] += 'l2_weight_'+str(args.l2_weight)
 
-
-jacobian_network = jacobian_training_driver(settings)
+if args.h1_weight == 0.0:
+	# There is no need for DINO training
+	observable_network = observable_training_driver(settings)
+else:
+	# There is a need for DINO Training
+	jacobian_network = jacobian_training_driver(settings)
 
 

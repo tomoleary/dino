@@ -83,9 +83,14 @@ def observable_training_driver(settings,verbose = True):
 	'''
 	'''
 	n_data = settings['train_data_size'] + settings['test_data_size']
-	data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
-		'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
-			'_nx'+str(settings['problem_settings']['nx'])+'/'
+	if settings['data_dir'] is None:
+		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
+			'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
+				'_nx'+str(settings['problem_settings']['nx'])+'/'
+		settings['data_dir'] = data_dir
+	else:
+		data_dir = settings['data_dir']
+
 	assert os.path.isdir(data_dir), 'Directory does not exist'+data_dir
 	for loss_weight in settings['opt_parameters']['loss_weights']:
 		assert loss_weight >= 0
