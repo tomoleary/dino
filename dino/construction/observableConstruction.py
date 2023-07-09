@@ -35,9 +35,6 @@ from .trainingUtilities import *
 from .dataUtilities import load_data
 
 
-
-
-
 def observable_network_settings(problem_settings):
 	'''
 	'''
@@ -51,9 +48,10 @@ def observable_network_settings(problem_settings):
 	settings['layer_rank'] = 8
 	settings['fixed_input_rank'] = 50
 	settings['fixed_output_rank'] = 50
-	settings['input_subspace'] = 'as'
-	settings['output_subspace'] = 'as'
+	settings['input_basis'] = 'as'
+	settings['output_basis'] = 'jjt'
 	settings['name_prefix'] = 'observable_'
+	settings['compat_layer'] = True
 	settings['breadth_tolerance'] = 1e2
 	settings['max_breadth'] = 10
 
@@ -103,18 +101,6 @@ def observable_training_driver(settings,verbose = True):
 	train_dict, test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
 
 	if settings['architecture'] in ['as_resnet','as_dense']:
-		# data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
-		# last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
-		# 								breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
-
-		# projectors = get_projectors(data_dir,fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
-
-		# input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
-
-		# projector_dict = {}
-		# projector_dict['input'] = input_projector
-		# projector_dict['output'] = last_layer_weights[0].T
-		# projector_dict['last_layer_bias'] = last_layer_weights[1]
 		projector_dict = setup_reduced_bases(settings,train_dict)
 	else:
 		projector_dict = None
@@ -152,6 +138,13 @@ def observable_network_loader(settings,file_name = None):
 							 'last_layer_bias':observable_weights[settings['name_prefix']+'output_layer'][1]}
 	except:
 		projector_dict = {}
+
+	use_compat_layer = False
+	for weight_name in observable_weights:
+		if 'compat_layer' in weight_name:
+			use_compat_layer = True
+
+	settings['compat_layer'] = use_compat_layer
 
 
 	observable_network = choose_network(settings,projector_dict)

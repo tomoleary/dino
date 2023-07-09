@@ -15,15 +15,6 @@
 # Author: Tom O'Leary-Roseberry
 # Contact: tom.olearyroseberry@utexas.edu
 
-import os
-import numpy as np
+from .customOperators import noisePrecision, JTJfromData
 
-gds = [(0.1,0.5)]
-
-nxnys = [(64,64)]
-
-for (gamma,delta) in gds:
-	for nx,ny in nxnys:
-		print(80*'#')
-		print(('Running for gd = '+str((gamma,delta))+' nx,ny = '+str((nx,ny))).center(80))
-		os.system('mpirun -n 1 python poissonProblemSetup.py -ninstance 1 -gamma '+str(gamma)+' -delta '+str(delta)+' -nx '+str(nx)+' -ny '+str(ny))
+from .inferenceOracle import InferenceOracle, inferenceOracleSettings

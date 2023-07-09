@@ -37,9 +37,8 @@ def default_settings():
 	settings['batch_rank'] = 100
 	return settings
 
-def build_string(settings):
-	command = 'python dino_training.py'
-	command+=' '
+def build_command(settings,command = 'python dino_training.py'):
+	command += ' '
 	for key,value in settings.items():
 		command += '-'+key
 		command += ' '
@@ -75,27 +74,27 @@ for ndata in ndatas:
 		settings['network_name'] = initial_name + '_ndata'+str(ndata)
 		settings['network_name'] += 'l2'
 		print(80*'#')
-		print(build_string(settings))
+		print(build_command(settings))
 		print(80*'#')
-		os.system(build_string(settings))
+		os.system(build_command(settings))
 		# Full H1 training
 		settings['h1_weight'] = 1.0
 		settings['train_full_jacobian'] = 1
 		settings['network_name'] = initial_name + '_ndata'+str(ndata)
 		settings['network_name'] += 'fullh1'
 		print(80*'#')
-		print(build_string(settings))
+		print(build_command(settings))
 		print(80*'#')
-		os.system(build_string(settings))
+		os.system(build_command(settings, command = 'python fast_training.py'))
 		# Truncated H1 training
 		settings['h1_weight'] = 1.0
 		settings['train_full_jacobian'] = 0
 		settings['network_name'] = initial_name + '_ndata'+str(ndata)
 		settings['network_name'] += 'th1'
 		print(80*'#')
-		print(build_string(settings))
+		print(build_command(settings))
 		print(80*'#')
-		os.system(build_string(settings))
+		os.system(build_command(settings))
 		# Truncated H1 training w/ matrix-subsampling
 		settings['h1_weight'] = 1.0
 		settings['train_full_jacobian'] = 0
@@ -103,9 +102,9 @@ for ndata in ndatas:
 		settings['network_name'] = initial_name + '_ndata'+str(ndata)
 		settings['network_name'] += 'th1ms'
 		print(80*'#')
-		print(build_string(settings))
+		print(build_command(settings))
 		print(80*'#')
-		os.system(build_string(settings))
+		os.system(build_command(settings))
 
 
 
@@ -123,27 +122,27 @@ for ndata in ndatas:
 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
 	settings['network_name'] += 'l2'
 	print(80*'#')
-	print(build_string(settings))
+	print(build_command(settings))
 	print(80*'#')
-	os.system(build_string(settings))
+	os.system(build_command(settings))
 	# Full H1 training
 	settings['h1_weight'] = 1.0
 	settings['train_full_jacobian'] = 1
 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
 	settings['network_name'] += 'fullh1'
 	print(80*'#')
-	print(build_string(settings))
+	print(build_command(settings))
 	print(80*'#')
-	os.system(build_string(settings))
+	os.system(build_command(settings))
 	# Truncated H1 training
 	settings['h1_weight'] = 1.0
 	settings['train_full_jacobian'] = 0
 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
 	settings['network_name'] += 'th1'
 	print(80*'#')
-	print(build_string(settings))
+	print(build_command(settings))
 	print(80*'#')
-	os.system(build_string(settings))
+	os.system(build_command(settings))
 	# Truncated H1 training w/ matrix-subsampling
 	settings['h1_weight'] = 1.0
 	settings['train_full_jacobian'] = 0
@@ -151,8 +150,8 @@ for ndata in ndatas:
 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
 	settings['network_name'] += 'th1ms'
 	print(80*'#')
-	print(build_string(settings))
+	print(build_command(settings))
 	print(80*'#')
-	os.system(build_string(settings))
+	os.system(build_command(settings))
 
 

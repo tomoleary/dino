@@ -353,8 +353,6 @@ def jacobian_training_driver(settings, remapped_data = None, unflattened_data = 
 		train_dict, test_dict = prune_the_data(projector_dict,train_dict,test_dict,input_pruning = settings['reduced_input_training'],\
 																			output_pruning = settings['reduced_output_training'])
 
-	print('m train.shape = ',train_dict['m_data'].shape)
-	print('m test.shape = ',test_dict['m_data'].shape)
 	################################################################################
 	# Set up the neural networks
 	regressor = setup_the_dino(settings,train_dict,projector_dict,reduced_input_training = settings['reduced_input_training'],\

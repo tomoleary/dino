@@ -21,10 +21,17 @@ The neural network scripts are all located in `dino_training/`. To run all neura
 
  Note that these runs may take very long, and were all run on a cluster with 1TB of RAM. The data are assumed to be loaded from a subfolder in `data/`. If this was moved somewhere else I suggest using symbolic links, (e.g., in bash `ln -s /path/to/moved/data/ data/`). 
 
- When these runs finish they will output trained weights (as pickled dictionaries) to a folder `trained_weights/` within the `dino_training/` directory.
-
+ When these runs finish they will output trained weights (as pickled dictionaries) to a folder `trained_weights/` within the `dino_training/` directory. The reason the neural networks are not directly [saved and loaded using tensorflow](https://www.tensorflow.org/tutorials/keras/save_and_load) is due to the significant computational graph overhead due to extracting the Jacobians from the neural network. Perhaps a better way to handle breaking up the training of DINOs from their evaluation and deployment would be to instance an identical architecture (without the Jacobian computational graph overhead) at the end of training, and copying over the weights from the trained DINO to the copy, and then saving the copy using tensorflow.
 
 ## 3. Evaluate the trained neural networks
+
+Once the neural networks are trained, and their weights have been saved, the networks can be evaluated using the following codes, which are also located in `dino_training/`.
+
+
+`python ...`
+
+
+These scripts will output dictionaries of evaluated accuracies, gradient errors and Jacobian errors to `dino_training/XXXX`
 
 
 

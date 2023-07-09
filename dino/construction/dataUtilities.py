@@ -204,65 +204,10 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 		print('Pre-computed POD did not load')
 	return projector_dictionary
 
-def modify_projectors(projectors,input_subspace,output_subspace):
-	# Modify the input projectors
-	assert input_subspace in ['kle','as','random']
 
-	if input_subspace in ['kle','as']:
-		# Always orthogonalize AS and KLE for best results
-		
-		if input_subspace == 'kle':
-			input_projector = projectors['KLE']
-		elif input_subspace == 'as':
-			input_projector = projectors['AS_input']
-
-		orthogonalize_input = True
-		if orthogonalize_input:
-			input_projector,_ = np.linalg.qr(input_projector)
-
-		rescale_input = False
-		if rescale_input:
-			# Scaling factor of 10 seemed to perform well for KLE and AS
-			# and this was independent of the projector rank.
-			scale_factor_input = float(input_projector.shape[0])/(32*float(input_projector.shape[-1]))
-			input_projector /= scale_factor_input*np.linalg.norm(input_projector)
-
-	elif input_subspace == 'random':
-		input_projector = np.random.randn(*projectors['KLE'].shape)
-		input_projector,_ = np.linalg.qr(input_projector)
-		scale_factor_input = float(input_projector.shape[0])/(32*float(input_projector.shape[-1]))
-		input_projector /= scale_factor_input*np.linalg.norm(input_projector)
-
-	# Modify the output projectors
-	# It seems that (re)-orthogonalizing the POD vectors
-	# may not improve the neural network.
-	assert output_subspace in ['pod','as','random',None]
-	if output_subspace is None:
-		output_projector = None
-
-	if output_subspace in ['pod','as']:
-		orthogonalize_output = True
-		rescale_output = True
-		if output_subspace == 'pod':
-			output_projector = projectors['POD']
-		elif output_subspace == 'as':
-			output_projector = projectors['AS_output']
-
-		if orthogonalize_output:
-			output_projector,_ = np.linalg.qr(output_projector)
-
-		if rescale_output:
-			scale_factor_output = 1.
-			output_projector /= scale_factor_output*np.linalg.norm(output_projector)
-
-	if output_subspace == 'random':
-		output_projector = np.random.randn(*projectors['POD'].shape)
-		output_projector /= np.linalg.norm(output_projector)
-
-	return input_projector, output_projector
-
-
+################################################################################
 # Training related data functions
+
 
 def shuffle_single_data(data_dictionary,train_size,val_size,test_size,seed = 0,copy = True,burn_in = 0):
 	"""
@@ -471,11 +416,6 @@ def train_test_split(data_dict,n_train,seed = 0):
 	random_state = np.random.RandomState(seed = seed)
 	indices = random_state.permutation(n_data)
 
-	# Instance test and train split
-	# m_train = m_data[indices[:n_train]]
-	# m_test = m_data[indices[n_train:]]
-	# q_train = q_data[indices[:n_train]]
-	# q_test = q_data[indices[n_train:]]
 	m_train = m_data[-n_train:]
 	q_train = q_data[-n_train:]
 
@@ -488,13 +428,6 @@ def train_test_split(data_dict,n_train,seed = 0):
 		sigma_data = data_dict['sigma_data']
 		V_data = data_dict['V_data']
 	
-		# U_train = U_data[indices[:n_train]]
-		# U_test = U_data[indices[n_train:]]
-		# sigma_train = sigma_data[indices[:n_train]]
-		# sigma_test = sigma_data[indices[n_train:]]
-		# V_train = V_data[indices[:n_train]]
-		# V_test = V_data[indices[n_train:]]
-
 		U_train = U_data[-n_train:]
 		sigma_train = sigma_data[-n_train:]
 		V_train = V_data[-n_train:]

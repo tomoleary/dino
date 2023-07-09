@@ -15,4 +15,4 @@
 # Author: Tom O'Leary-Roseberry
 # Contact: tom.olearyroseberry@utexas.edu
 
-from .surrogate_construction import *
+from .construction import *

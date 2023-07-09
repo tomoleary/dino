@@ -18,39 +18,53 @@
 import numpy as np
 
 from .neuralNetworks import *
-from .dataUtilities import get_projectors, modify_projectors
+from .dataUtilities import get_projectors
 
 
 # Define procedures for defining networks via POD spectral decay here
 
-def setup_reduced_bases(settings,train_dict,verbose = False):
-	if settings['architecture'] in ['as_resnet','as_dense','kle_dense','kle_resnet']:
-		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
-		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
-										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
-
-		print('last_layer_weights[0].shape = ',last_layer_weights[0].shape)
-
+def setup_reduced_bases(settings,train_dict,orth_input = True, orth_output = True):
+	"""
+	"""
+	if settings['architecture'].lower() in ['rb_resnet','rb_dense']:
 
 		projectors = get_projectors(settings['data_dir'],fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
-		# Projectors are made orthonormal here
-		input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
+		# Input basis selection
+		if settings['input_basis'].lower() == 'as':
+			assert 'AS_input' in projectors.keys(), 'Active subspace basis not found'
+			input_projector = projectors['AS_input']
 
-		if verbose:
-			print(80*'#')
-			print('Checking orthonormality'.center(80))
-			print('input_projector.shape = ',input_projector.shape)
-			VTV = input_projector.T@input_projector
-			VVT = input_projector@input_projector.T
-			print(80*'#')
-			print('VVT = ',VVT)
-			print(80*'#')
-			print('np.linalg.norm(VVT) = ',np.linalg.norm(VVT))
-			print(80*'#')
-			print('VTV = ',VTV)
-			print(80*'#')
-			print('np.linalg.norm(VTV) = ',np.linalg.norm(VTV))
+		elif settings['input_basis'].lower() == 'kle':
+			assert 'KLE_input' in projectors.keys(), 'KLE basis not found'
+			input_projector = projectors['KLE_input']
+		
+		else:
+			print('Choice of input basis is not supported'.center(80))
+			raise
 
+		if orth_input:
+			input_projector,_ = np.linalg.qr(input_projector)
+
+		# Output basis selection
+		if settings['output_basis'].lower() == 'pod':
+			data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
+			print(train_dict['q_data'].shape)
+			# Made orthonormal here
+			last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
+											breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
+
+		elif settings['output_basis'].lower() == 'jjt':
+			assert 'AS_output' in projectors.keys(), 'Derivative-informed output subspace not found.'
+			output_projector = projectors['AS_output']
+			if orth_output:
+				output_projector, _ = np.linalg.qr(output_projector)
+			# Last layer bias is mean of the training data
+			last_layer_weights = [output_projector.T,np.mean(train_dict['q_data'],axis = 0)]
+
+		else:
+			print('Choice of output basis is not supported'.center(80))
+			raise 
+		
 
 		projector_dict = {}
 		projector_dict['input'] = input_projector
@@ -102,13 +116,11 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 	network_name_prefix = settings['name_prefix']
 
-	if architecture in ['as_resnet','kle_resnet']:
+	if architecture.lower() == 'rb_resnet':
 		print(80*'#')
-		if 'kle' in architecture:
-			basis = 'KLE'
-		elif 'as' in architecture:
-			basis = 'AS'
-		print('Loading '+basis+' ResNet'.center(80))
+		input_basis = settings['input_basis']
+		output_basis = settings['output_basis']
+		print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' ResNet').center(80))
 
 		ranks = depth*[settings['layer_rank']]
 
@@ -131,16 +143,15 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		reduced_output_dim = settings['reduced_output_dim']
 		regressor, last_layer_weights = construct_projected_resnet(input_projector, last_layer_weights, ranks,\
 											  name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
-											 reduced_output_dim = reduced_output_dim)
+											 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'])
 
 
-	elif architecture in ['as_dense','kle_dense']:
+	elif architecture.lower() == 'rb_dense':
 		print(80*'#')
-		if 'kle' in architecture:
-			basis = 'KLE'
-		elif 'as' in architecture:
-			basis = 'AS'
-		print('Loading '+basis+' Dense'.center(80))
+		input_basis = settings['input_basis']
+		output_basis = settings['output_basis']
+
+		print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' Dense').center(80))
 		hidden_layer_dimensions = 2*[truncation_dimension]
 
 		if reduced_input_training:
@@ -163,7 +174,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		
 		regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, depth,\
 											 name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
-											 reduced_output_dim = reduced_output_dim)
+											 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'])
 
 
 	elif architecture == 'generic_dense':
@@ -184,7 +195,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 
 def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name_prefix = '',\
-								reduced_input_dim = None, reduced_output_dim = None):
+								reduced_input_dim = None, reduced_output_dim = None, compat_layer = True):
 	"""
 	"""
 	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
@@ -192,13 +203,13 @@ def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name
 
 	pod_resnet = projected_resnet(input_projector = input_projector,last_layer_weights = last_layer_weights,\
 									ranks = ranks,name_prefix = name_prefix,reduced_input_dim = reduced_input_dim,\
-									reduced_output_dim = reduced_output_dim)
+									reduced_output_dim = reduced_output_dim,compat_layer = compat_layer)
 
 	return pod_resnet, last_layer_weights
 
 def construct_projected_dense(input_projector, last_layer_weights, depth, name_prefix = '',\
 								reduced_input_dim = None,reduced_output_dim = None,\
-								truncation_dimension = None):
+								truncation_dimension = None,compat_layer = True):
 	"""
 	"""
 	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
@@ -218,7 +229,8 @@ def construct_projected_dense(input_projector, last_layer_weights, depth, name_p
 
 	pod_dense_network = projected_dense(input_projector=input_projector	,last_layer_weights = last_layer_weights,\
 									hidden_layer_dimensions = depth*[truncation_dimension],name_prefix = name_prefix,\
-									reduced_input_dim = reduced_input_dim,reduced_output_dim = reduced_output_dim)
+									reduced_input_dim = reduced_input_dim,reduced_output_dim = reduced_output_dim,\
+									compat_layer = compat_layer)
 
 	return pod_dense_network, last_layer_weights
 

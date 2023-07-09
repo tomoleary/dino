@@ -15,31 +15,9 @@
 # Author: Tom O'Leary-Roseberry
 # Contact: tom.olearyroseberry@utexas.edu
 
-import math
+from .gradientTests import gradient_error_test, gradient_timing_test
 
-def poisson_problem_settings(settings = {}):
-	"""
-	"""
-	
-	settings['ntargets'] = 50
-	settings['nx_targets'] = 10
-	settings['ny_targets'] = 5
-	settings['gamma'] = 0.1
-	settings['delta'] = 0.5
-	settings['nx'] = 64
-	settings['ny'] = 64
-	settings['ndim'] = 2
-	settings['jacobian_full_rank'] = 50
-	settings['formulation'] = 'poisson'
-	settings['rel_noise'] = 0.01
+from .jacobianTests import compute_jacobian_errors
 
-	# For prior anisotropic tensor
-	settings['prior_theta0'] = 2.0
-	settings['prior_theta1'] = 0.5
-	settings['prior_alpha'] = math.pi/4
+from .surrogatePostProcessing import evaluateJacobianNetwork
 
-	# For sampling
-	settings['seed'] = 1
-
-
-	return settings
