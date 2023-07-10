@@ -20,7 +20,7 @@ import os
 def default_settings():
 	settings = {}
 	settings['total_epochs'] = 100
-	settings['total_epochs'] = 1
+	# settings['total_epochs'] = 1
 
 	# Architecture selection
 	settings['architecture'] = 'as_dense'
