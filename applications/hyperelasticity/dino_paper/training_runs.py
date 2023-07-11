@@ -23,7 +23,9 @@ def default_settings():
 	# settings['total_epochs'] = 1
 
 	# Architecture selection
-	settings['architecture'] = 'as_dense'
+	settings['architecture'] = 'rb_dense'
+	settings['input_basis'] = 'as'
+	settings['output_basis'] = 'jjt'
 	# Specific to reduced basis networks
 	settings['fixed_input_rank'] = 100
 	settings['fixed_output_rank'] = 50
@@ -62,7 +64,7 @@ rb_dims = [(100,50),(200,100)]
 for ndata in ndatas:
 	for rM, rQ in rb_dims:
 		settings = default_settings()
-		settings['architecture'] = 'as_dense'
+		settings['architecture'] = 'rb_dense'
 		initial_name0 = 'DIPNet'
 		# Specific to this loop
 		settings['train_data_size'] = ndata

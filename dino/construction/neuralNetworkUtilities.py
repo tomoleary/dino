@@ -111,7 +111,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 	depth = settings['depth']
 	truncation_dimension = settings['truncation_dimension']
 	architecture = settings['architecture']
-	if architecture in ['as_resnet','as_dense']:
+	if architecture.lower() in ['rb_resnet','rb_dense']:
 		assert projector_dict is not None
 
 	network_name_prefix = settings['name_prefix']
@@ -184,7 +184,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		assert settings['output_dim'] is not None
 		input_dim = settings['input_dim']
 		output_dim = settings['output_dim']
-		truncation_dimension = min(input_dim,output_dim)
+		truncation_dimension = settings['truncation_dimension']
 		regressor = generic_dense(input_dim,output_dim,depth*[truncation_dimension])
 
 	else:

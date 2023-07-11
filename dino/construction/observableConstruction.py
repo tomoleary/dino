@@ -150,6 +150,11 @@ def observable_network_loader(settings,file_name = None):
 	observable_network = choose_network(settings,projector_dict)
 
 	for layer in observable_network.layers:
+		print('layer = ',layer.name)
+		try:
+			print('SHAPE = ',observable_weights[layer.name][0].shape)
+		except:
+			print('issue moving on')
 		layer.set_weights(observable_weights[layer.name])
 
 	return observable_network
