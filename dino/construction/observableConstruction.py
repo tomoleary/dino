@@ -100,7 +100,7 @@ def observable_training_driver(settings,verbose = True):
 
 	train_dict, test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
 
-	if settings['architecture'] in ['as_resnet','as_dense']:
+	if settings['architecture'].lower() in ['rb_resnet','rb_dense']:
 		projector_dict = setup_reduced_bases(settings,train_dict)
 	else:
 		projector_dict = None
