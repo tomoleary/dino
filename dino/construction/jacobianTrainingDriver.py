@@ -227,24 +227,6 @@ def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict =
 	else:
 		regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'])
 
-	if settings['save_weights']:
-		import pickle
-
-		jacobian_weights = {}
-		for layer in regressor.layers:
-			jacobian_weights[layer.name] = layer.get_weights()
-
-		os.makedirs(settings['weights_dir'],exist_ok = True)
-		if settings['network_name'] is None:
-			network_name = settings['name_prefix']+str(settings['architecture'])+'_depth'+str(settings['depth'])+\
-										'_batch_rank_'+str(settings['batch_rank'])
-		else:
-			network_name = settings['network_name']
-
-		jacobian_filename = settings['weights_dir']+network_name+'.pkl'
-		with open(jacobian_filename,'wb+') as f_jacobian:
-			pickle.dump(jacobian_weights,f_jacobian,pickle.HIGHEST_PROTOCOL)
-
 	return regressor
 
 def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
@@ -316,6 +298,25 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 		print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 		logger['l2_train'], logger['h1_train'] = eval_train[3], eval_train[6]
 		logger['l2_test'], logger['h1_test'] = eval_test[3], eval_test[6]
+
+	if settings['save_weights']:
+		import pickle
+
+		jacobian_weights = {}
+		for layer in regressor.layers:
+			jacobian_weights[layer.name] = layer.get_weights()
+
+		os.makedirs(settings['weights_dir'],exist_ok = True)
+		if settings['network_name'] is None:
+			network_name = settings['name_prefix']+str(settings['architecture'])+'_depth'+str(settings['depth'])+\
+										'_batch_rank_'+str(settings['batch_rank'])
+		else:
+			network_name = settings['network_name']
+
+		jacobian_filename = settings['weights_dir']+network_name+'.pkl'
+		with open(jacobian_filename,'wb+') as f_jacobian:
+			pickle.dump(jacobian_weights,f_jacobian,pickle.HIGHEST_PROTOCOL)
+
 
 	return regressor
 	

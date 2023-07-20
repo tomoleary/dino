@@ -177,34 +177,3 @@ def equip_model_with_output_reduced_jacobian(model,reduced_output_basis,name_pre
 	return new_model
 
 
-# def jacobian_network_loader(settings,file_name = None):
-# 	"""
-# 	"""
-# 	if file_name is None:
-# 		file_name = settings['weights_dir']+settings['name_prefix']+str(settings['architecture'])+\
-# 			'_depth'+str(settings['depth'])+'_batch_rank_'+str(settings['batch_rank'])+'.pkl'
-
-# 	assert os.path.isfile(file_name), 'Trained weights may not exist as specified: '+str(file_name)
-
-# 	# jacobian_weights = pickle.load(open(file_name,'rb'))
-
-# 	try:
-# 		# import pickle
-# 		jacobian_weights = pickle.load(open(file_name,'rb'))
-# 	except:
-# 		import pickle5
-# 		jacobian_weights = pickle5.load(open(file_name,'rb'))
-
-# 	try:
-# 		projector_dict = {'input':jacobian_weights[settings['name_prefix']+'input_proj_layer'][0],\
-# 							 'output':jacobian_weights[settings['name_prefix']+'output_layer']}
-# 	except:
-# 		projector_dict = None
-
-# 	jacobian_network = choose_network(settings,projector_dict)
-
-# 	for layer in jacobian_network.layers:
-# 		layer.set_weights(jacobian_weights[layer.name])
-
-# 	return jacobian_network
-
