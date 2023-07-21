@@ -104,7 +104,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 	'''
 
 	'''
-	
+
 	# Load the input and output projectors
 	layer_weights = {}
 
@@ -189,8 +189,8 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		regressor = generic_dense(input_dim,output_dim,depth*[truncation_dimension])
 
 	else:
-		print('Architecture: ',architecture,' not supported!')
-		raise
+		# print('Architecture: ',architecture,' not supported!')
+		raise Exception('Architecture: ',architecture,' not supported!')
 
 	return regressor
 

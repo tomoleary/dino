@@ -132,20 +132,12 @@ def observable_network_loader(settings,file_name = None):
 		import pickle5
 		observable_weights = pickle5.load(open(file_name,'rb'))
 
-	# try:
-	print(80*'#')
-	# print('observable_weights.keys() = ',observable_weights.keys())
-	for key in observable_weights.keys():
-		if 'input_' in key:
-			print('me:', key)
-
-		if 'output' in key:
-			print('out:',key)
-	projector_dict = {'input':observable_weights[settings['name_prefix']+'input_proj_layer'][0],\
+	try:
+		projector_dict = {'input':observable_weights[settings['name_prefix']+'input_proj_layer'][0],\
 						 'output':observable_weights[settings['name_prefix']+'output_layer'][0].T,\
 						 'last_layer_bias':observable_weights[settings['name_prefix']+'output_layer'][1]}
-	# except:
-	# 	projector_dict = {}
+	except:
+		projector_dict = {}
 
 	use_compat_layer = False
 	for weight_name in observable_weights:

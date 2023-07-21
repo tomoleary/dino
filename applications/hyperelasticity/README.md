@@ -25,13 +25,14 @@ The neural network scripts are all located in `dino_training/`. To run all neura
 
 ## 3. Evaluate the trained neural networks
 
-Once the neural networks are trained, and their weights have been saved, the networks can be evaluated using the following codes, which are also located in `dino_training/`.
+Once the neural networks are trained, and their weights have been saved, the networks can be evaluated using the following codes, which are located in `dino_training/evaluation/`.
+
+Once in `dino_training/evaluation/`
+
+`python evaluation_loop.py -weights_dir ../trained_weights/`
 
 
-`python ...`
-
-
-These scripts will output dictionaries of evaluated accuracies, gradient errors and Jacobian errors to `dino_training/XXXX`
+These scripts will output dictionaries of evaluated accuracies, gradient errors and Jacobian errors to `dino_training/evaluation/postproc/`
 
 
 

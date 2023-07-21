@@ -29,27 +29,27 @@ import time
 class noiseCovariance:
 	"""
 	"""
-    
-    def __init__(self, noise_variance):
+	
+	def __init__(self, noise_variance):
 
-    	self.noise_variance = noise_variance
+		self.noise_variance = noise_variance
 
 
-    def __mult__(self,x):
-    	return self.noise_variance*x
+	def __mult__(self,x):
+		return self.noise_variance*x
 
 
 class noisePrecision:
 	"""
 	"""
-    
-    def __init__(self, noise_variance):
+	
+	def __init__(self, noise_variance):
 
-    	self.noise_variance = noise_variance
+		self.noise_variance = noise_variance
 
 
-    def __mult__(self,x):
-    	return x*(1/self.noise_variance)
+	def __mult__(self,x):
+		return x*(1/self.noise_variance)
 
 class JTJfromData:
 	"""
@@ -112,38 +112,38 @@ class JTJfromData:
 
 
 class JTGamma_invJ:
-    """
-    This class implements the operator :math:`J^TJ` given a Jacobian :math:`J`
-    """
-    def __init__(self,J,noise_variance):
-        """
-        Constructor
-            - :code:`J` - Jacobian object, assumed to be of of type :code:`hippyflow.modeling.Jacobian`
-            - :code:`noise_variance` - float, assuming scalar multiple of identity noise covariance
-        """
-        self.J = J
-        self.vector_help = dl.Vector(self.J.mpi_comm())
-        self.J.init_vector(self.vector_help,0)
-        self.noise_variance = noise_variance
+	"""
+	This class implements the operator :math:`J^TJ` given a Jacobian :math:`J`
+	"""
+	def __init__(self,J,noise_variance):
+		"""
+		Constructor
+			- :code:`J` - Jacobian object, assumed to be of of type :code:`hippyflow.modeling.Jacobian`
+			- :code:`noise_variance` - float, assuming scalar multiple of identity noise covariance
+		"""
+		self.J = J
+		self.vector_help = dl.Vector(self.J.mpi_comm())
+		self.J.init_vector(self.vector_help,0)
+		self.noise_variance = noise_variance
 
-    def mult(self,x,y):
-        """
-        Compute :math:`y = J^TJ x `
-        """
-        self.J.mult(x,self.vector_help)
-        # The Jacobian implements the B and BT
-        # So we need to manually handle the other aspect of
-        # applyWuu
-        # e.g., the scaling by noise variance
-        # https://github.com/hippylib/hippylib/blob/master/hippylib/modeling/misfit.py#LL121C27-L121C27
-        self.vector_help *= (1./self.noise_variance)
-        self.J.transpmult(self.vector_help,y)
+	def mult(self,x,y):
+		"""
+		Compute :math:`y = J^TJ x `
+		"""
+		self.J.mult(x,self.vector_help)
+		# The Jacobian implements the B and BT
+		# So we need to manually handle the other aspect of
+		# applyWuu
+		# e.g., the scaling by noise variance
+		# https://github.com/hippylib/hippylib/blob/master/hippylib/modeling/misfit.py#LL121C27-L121C27
+		self.vector_help *= (1./self.noise_variance)
+		self.J.transpmult(self.vector_help,y)
 
-    def init_vector(self,x,dim=None):
-        """
-        Initialize :code:`x` to be compatible with the range (:code:`dim=0`) or domain (:code:`dim=1`) of :code:`JTJ`.
-        """
-        self.J.init_vector(x,1)
+	def init_vector(self,x,dim=None):
+		"""
+		Initialize :code:`x` to be compatible with the range (:code:`dim=0`) or domain (:code:`dim=1`) of :code:`JTJ`.
+		"""
+		self.J.init_vector(x,1)
 
 
 
