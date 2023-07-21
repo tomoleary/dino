@@ -71,14 +71,14 @@ for ndata in ndatas:
 		settings['fixed_input_rank'] = rM
 		settings['fixed_output_rank'] = rQ
 		initial_name = initial_name0 + str(rM)+'-'+str(rQ)
-		# # L2 training
-		# settings['h1_weight'] = 0.0
-		# settings['network_name'] = initial_name + '_ndata'+str(ndata)
-		# settings['network_name'] += 'l2'
-		# print(80*'#')
-		# print(build_command(settings))
-		# print(80*'#')
-		# os.system(build_command(settings))
+		# L2 training
+		settings['h1_weight'] = 0.0
+		settings['network_name'] = initial_name + '_ndata'+str(ndata)
+		settings['network_name'] += 'l2'
+		print(80*'#')
+		print(build_command(settings))
+		print(80*'#')
+		os.system(build_command(settings))
 		# Full H1 training
 		settings['h1_weight'] = 1.0
 		settings['train_full_jacobian'] = 1
@@ -88,72 +88,72 @@ for ndata in ndatas:
 		print(build_command(settings))
 		print(80*'#')
 		os.system(build_command(settings, command = 'python fast_training.py'))
-		# # Truncated H1 training
-		# settings['h1_weight'] = 1.0
-		# settings['train_full_jacobian'] = 0
-		# settings['network_name'] = initial_name + '_ndata'+str(ndata)
-		# settings['network_name'] += 'th1'
-		# print(80*'#')
-		# print(build_command(settings))
-		# print(80*'#')
-		# os.system(build_command(settings))
-		# # Truncated H1 training w/ matrix-subsampling
-		# settings['h1_weight'] = 1.0
-		# settings['train_full_jacobian'] = 0
-		# settings['batch_rank'] = 10
-		# settings['network_name'] = initial_name + '_ndata'+str(ndata)
-		# settings['network_name'] += 'th1ms'
-		# print(80*'#')
-		# print(build_command(settings))
-		# print(80*'#')
-		# os.system(build_command(settings))
+		# Truncated H1 training
+		settings['h1_weight'] = 1.0
+		settings['train_full_jacobian'] = 0
+		settings['network_name'] = initial_name + '_ndata'+str(ndata)
+		settings['network_name'] += 'th1'
+		print(80*'#')
+		print(build_command(settings))
+		print(80*'#')
+		os.system(build_command(settings))
+		# Truncated H1 training w/ matrix-subsampling
+		settings['h1_weight'] = 1.0
+		settings['train_full_jacobian'] = 0
+		settings['batch_rank'] = 10
+		settings['network_name'] = initial_name + '_ndata'+str(ndata)
+		settings['network_name'] += 'th1ms'
+		print(80*'#')
+		print(build_command(settings))
+		print(80*'#')
+		os.system(build_command(settings))
 
 
 
-# ################################################################################
-# # Generic dense training runs
+################################################################################
+# Generic dense training runs
 
-# for ndata in ndatas:
-# 	settings = default_settings()
-# 	settings['architecture'] = 'generic_dense'
-# 	initial_name = 'generic_dense'
-# 	# Specific to this loop
-# 	settings['train_data_size'] = ndata
-# 	# L2 training
-# 	settings['h1_weight'] = 0.0
-# 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
-# 	settings['network_name'] += 'l2'
-# 	print(80*'#')
-# 	print(build_command(settings))
-# 	print(80*'#')
-# 	os.system(build_command(settings))
-# 	# Full H1 training
-# 	settings['h1_weight'] = 1.0
-# 	settings['train_full_jacobian'] = 1
-# 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
-# 	settings['network_name'] += 'fullh1'
-# 	print(80*'#')
-# 	print(build_command(settings))
-# 	print(80*'#')
-# 	os.system(build_command(settings))
-# 	# Truncated H1 training
-# 	settings['h1_weight'] = 1.0
-# 	settings['train_full_jacobian'] = 0
-# 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
-# 	settings['network_name'] += 'th1'
-# 	print(80*'#')
-# 	print(build_command(settings))
-# 	print(80*'#')
-# 	os.system(build_command(settings))
-# 	# Truncated H1 training w/ matrix-subsampling
-# 	settings['h1_weight'] = 1.0
-# 	settings['train_full_jacobian'] = 0
-# 	settings['batch_rank'] = 10
-# 	settings['network_name'] = initial_name + '_ndata'+str(ndata)
-# 	settings['network_name'] += 'th1ms'
-# 	print(80*'#')
-# 	print(build_command(settings))
-# 	print(80*'#')
-# 	os.system(build_command(settings))
+for ndata in ndatas:
+	settings = default_settings()
+	settings['architecture'] = 'generic_dense'
+	initial_name = 'generic_dense'
+	# Specific to this loop
+	settings['train_data_size'] = ndata
+	# L2 training
+	settings['h1_weight'] = 0.0
+	settings['network_name'] = initial_name + '_ndata'+str(ndata)
+	settings['network_name'] += 'l2'
+	print(80*'#')
+	print(build_command(settings))
+	print(80*'#')
+	os.system(build_command(settings))
+	# Full H1 training
+	settings['h1_weight'] = 1.0
+	settings['train_full_jacobian'] = 1
+	settings['network_name'] = initial_name + '_ndata'+str(ndata)
+	settings['network_name'] += 'fullh1'
+	print(80*'#')
+	print(build_command(settings))
+	print(80*'#')
+	os.system(build_command(settings))
+	# Truncated H1 training
+	settings['h1_weight'] = 1.0
+	settings['train_full_jacobian'] = 0
+	settings['network_name'] = initial_name + '_ndata'+str(ndata)
+	settings['network_name'] += 'th1'
+	print(80*'#')
+	print(build_command(settings))
+	print(80*'#')
+	os.system(build_command(settings))
+	# Truncated H1 training w/ matrix-subsampling
+	settings['h1_weight'] = 1.0
+	settings['train_full_jacobian'] = 0
+	settings['batch_rank'] = 10
+	settings['network_name'] = initial_name + '_ndata'+str(ndata)
+	settings['network_name'] += 'th1ms'
+	print(80*'#')
+	print(build_command(settings))
+	print(80*'#')
+	os.system(build_command(settings))
 
 

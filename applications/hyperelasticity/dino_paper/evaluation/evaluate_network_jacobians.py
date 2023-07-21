@@ -42,7 +42,7 @@ from dino import *
 from dino.inference.inferenceOracle import InferenceOracle
 from dino.evaluation.jacobianTests import compute_jacobian_errors
 
-# Import CRD problem specifics
+# Import hyperelasticity problem specifics
 sys.path.append('../../')
 from hyperelasticityModelUtilities import hyperelasticity_model_wrapper
 from hyperelasticityModelSettings import hyperelasticity_problem_settings
@@ -75,7 +75,7 @@ modelwrapper = hyperelasticity_model_wrapper()
 settings = jacobian_network_settings(problem_settings)
 
 
-for weights_name in weights_files[3:4]:
+for weights_name in weights_files[:]:
 	####
 	evaluate_network = False
 	settings = jacobian_network_settings(problem_settings)
@@ -104,7 +104,6 @@ for weights_name in weights_files[3:4]:
 		pass
 
 	if evaluate_network:
-		# try:
 		file_name = weights_dir+weights_name
 		jacobian_network = observable_network_loader(settings, file_name = file_name)	
 		for i in range(2):
@@ -115,15 +114,12 @@ for weights_name in weights_files[3:4]:
 			print(80*'#')
 
 		oracle_dictionary[weights_name] = InferenceOracle(modelwrapper,jacobian_network)
-		# except:
-		# 	print('Issue for ',weights_name)
 
 
 print(80*'#')
 print('total number of networks to evaluate = ',len(oracle_dictionary.keys()))
 print(80*'#')
 assert len(oracle_dictionary.keys()) > 0
-
 
 # First test just do normal errors
 
@@ -139,8 +135,7 @@ os.makedirs(logging_dir,exist_ok = True)
 with open(logging_dir+logger_name, 'wb+') as f:
     pickle.dump(all_errors, f, pickle.HIGHEST_PROTOCOL)
 
-# with open(logging_dir+timings_name, 'wb+') as f:
-# 	pickle.dump(all_timings, f, pickle.HIGHEST_PROTOCOL)
+
 
 
 

@@ -31,10 +31,10 @@ weights_dir = args.weights_dir
 
 os.system('python link_weights.py')
 
-for ndata in ndatas[:1]:
+for ndata in ndatas[:]:
 
 	warg = ' -weights_dir '+weights_dir
 	narg = ' -ndata '+ndata
-	# os.system('python evaluate_network_accuracies.py '+warg+narg)
-	# os.system('python evaluate_network_gradients.py -logging_dir postproc/gradients/'+warg+narg)
+	os.system('python evaluate_network_accuracies.py '+warg+narg)
+	os.system('python evaluate_network_gradients.py -logging_dir postproc/gradients/'+warg+narg)
 	os.system('python evaluate_network_jacobians.py -logging_dir postproc/jacobians/'+warg+narg)

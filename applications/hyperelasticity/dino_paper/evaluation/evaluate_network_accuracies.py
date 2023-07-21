@@ -42,7 +42,7 @@ from dino import *
 
 from dino.evaluation.surrogatePostProcessing import evaluateJacobianNetwork
 
-# Import CRD problem specifics
+# Import hyperelasticity problem specifics
 sys.path.append('../../')
 from hyperelasticityModelSettings import hyperelasticity_problem_settings
 
@@ -77,7 +77,7 @@ data_dir = '../../data/hyperelasticity_n_obs_'+str(n_obs)+'_correlation_length'+
 print(os.path.isdir(data_dir))
 
 
-for weights_name in weights_files[3:4]:
+for weights_name in weights_files[:]:
 	print('weights_name = ',weights_name)
 	t0 = time.time()
 	####

@@ -45,7 +45,7 @@ from dino import *
 from dino.inference.inferenceOracle import InferenceOracle
 from dino.evaluation.gradientTests import gradient_error_test
 
-# Import CRD problem specifics
+# Import hyperelasticity problem specifics
 sys.path.append('../../')
 from hyperelasticityModelSettings import hyperelasticity_problem_settings
 from hyperelasticityModelUtilities import hyperelasticity_model_wrapper
@@ -85,7 +85,7 @@ observable_network = None
 print(weights_files)
 
 
-for weights_name in weights_files[3:4]:
+for weights_name in weights_files[:]:
 	####
 	evaluate_network = False
 	settings = jacobian_network_settings(problem_settings)
@@ -114,7 +114,6 @@ for weights_name in weights_files[3:4]:
 		pass
 
 	if evaluate_network:
-		# try:
 		file_name = weights_dir+weights_name
 		jacobian_network = observable_network_loader(settings, file_name = file_name)	
 		for i in range(2):
@@ -125,8 +124,6 @@ for weights_name in weights_files[3:4]:
 			print(80*'#')
 
 		oracle_dictionary[weights_name] = InferenceOracle(modelwrapper,jacobian_network)
-		# except:
-		# 	print('There was an issue for ',weights_name)
 
 assert len(oracle_dictionary.keys()) > 0
 
