@@ -46,10 +46,10 @@ parser = ArgumentParser(add_help=True)
 # Architectural parameters
 parser.add_argument("-architecture", dest='architecture',required=False, default = 'rb_dense', help="architecture type: as_dense or generic_dense",type=str)
 parser.add_argument("-input_basis", dest='input_basis',required=False, default = 'as',  help="input basis: as or kle",type=str)
-parser.add_argument("-output_basis", dest='output_basis',required=False, default = 'jjt',  help="output basis: pod or jjt",type=str)
-parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 50, help="rank for input of AS network",type=int)
+parser.add_argument("-output_basis", dest='output_basis',required=False, default = 'pod',  help="output basis: pod or jjt",type=str)
+parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 100, help="rank for input of AS network",type=int)
 parser.add_argument("-fixed_output_rank", dest='fixed_output_rank',required=False, default = 50, help="rank for output of AS network",type=int)
-parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 200, help="truncation dimension for low rank networks",type=int)
+parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 100, help="truncation dimension for low rank networks",type=int)
 parser.add_argument("-network_name", dest='network_name',required=True,  help="out name for the saved weights",type=str)
 
 
@@ -80,7 +80,7 @@ n_obs = 50
 gamma = 0.1
 delta = 1.0
 nx = 64
-settings['data_dir'] = '../data/rdiff_n_obs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
+settings['data_dir'] = '../data/rdiff_nobs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
 
 settings['target_rank'] = args.target_rank
 settings['batch_rank'] = args.batch_rank

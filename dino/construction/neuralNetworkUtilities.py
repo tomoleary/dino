@@ -158,7 +158,6 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 			input_projector = None
 			assert settings['reduced_input_dim'] is not None
 		else:
-			print('projector_dict.keys() = ',projector_dict.keys())
 			input_projector = projector_dict['input']
 			layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
 

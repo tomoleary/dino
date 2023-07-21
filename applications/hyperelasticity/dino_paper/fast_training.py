@@ -61,7 +61,7 @@ parser.add_argument("-total_epochs", dest='total_epochs',required=False, default
 parser.add_argument("-target_rank", dest='target_rank',required=False, default = 50,  help="target rank to be learned for Jacobian information",type=int)
 parser.add_argument("-batch_rank", dest='batch_rank',required=False, default = 50,  help="batch rank parameter used in sketching of Jacobian information",type=int)
 parser.add_argument("-l2_weight", dest='l2_weight',required=False, default = 1.,  help="weight for l2 term",type=float)
-parser.add_argument("-h1_weight", dest='h1_weight',required=False, default = 10.,  help="weight for h1 term",type=float)
+parser.add_argument("-h1_weight", dest='h1_weight',required=False, default = 1.,  help="weight for h1 term",type=float)
 
 # Full J training
 parser.add_argument("-train_full_jacobian", dest='train_full_jacobian',required=False, default = 1,  help="full J",type=int)

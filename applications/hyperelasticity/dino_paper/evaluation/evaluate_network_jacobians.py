@@ -75,7 +75,7 @@ modelwrapper = hyperelasticity_model_wrapper()
 settings = jacobian_network_settings(problem_settings)
 
 
-for weights_name in weights_files[1:3]:
+for weights_name in weights_files[3:4]:
 	####
 	evaluate_network = False
 	settings = jacobian_network_settings(problem_settings)
@@ -96,6 +96,7 @@ for weights_name in weights_files[1:3]:
 		settings['architecture'] = 'generic_dense'
 		# What is a better way in general to set the input and output dimensions.
 		settings['input_dim'] = args.input_dim
+		settings['truncation_dimension'] = 200
 		settings['output_dim'] = 100
 		evaluate_network = True
 	else:
@@ -121,7 +122,7 @@ for weights_name in weights_files[1:3]:
 print(80*'#')
 print('total number of networks to evaluate = ',len(oracle_dictionary.keys()))
 print(80*'#')
-assert len(oracle_dictionary.keys()) > 1
+assert len(oracle_dictionary.keys()) > 0
 
 
 # First test just do normal errors

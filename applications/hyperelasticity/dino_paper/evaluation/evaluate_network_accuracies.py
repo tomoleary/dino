@@ -77,7 +77,7 @@ data_dir = '../../data/hyperelasticity_n_obs_'+str(n_obs)+'_correlation_length'+
 print(os.path.isdir(data_dir))
 
 
-for weights_name in weights_files[:]:
+for weights_name in weights_files[3:4]:
 	print('weights_name = ',weights_name)
 	t0 = time.time()
 	####

@@ -85,7 +85,7 @@ observable_network = None
 print(weights_files)
 
 
-for weights_name in weights_files[:]:
+for weights_name in weights_files[3:4]:
 	####
 	evaluate_network = False
 	settings = jacobian_network_settings(problem_settings)
@@ -106,6 +106,7 @@ for weights_name in weights_files[:]:
 		settings['architecture'] = 'generic_dense'
 		# What is a better way in general to set the input and output dimensions.
 		settings['input_dim'] = args.input_dim
+		settings['truncation_dimension'] = 200
 		settings['output_dim'] = 100
 		evaluate_network = True
 	else:
@@ -127,7 +128,7 @@ for weights_name in weights_files[:]:
 		# except:
 		# 	print('There was an issue for ',weights_name)
 
-assert len(oracle_dictionary.keys()) > 1
+assert len(oracle_dictionary.keys()) > 0
 
 results = gradient_error_test(oracle_dictionary,n_samples = args.n_samples)
 

@@ -59,7 +59,7 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = None):
 			appendage_q = npz_data['q_data']
 			m_data = np.concatenate((m_data,appendage_m))
 			q_data = np.concatenate((q_data,appendage_q))
-      
+	  
 	if n_data is not None:
 		assert type(n_data) is int
 		assert n_data <= m_data.shape[0], 'Requesting too much data, available number: '+str(m_data.shape[0])+', try again'
@@ -143,7 +143,17 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 	try:
 		################################################################################
 		# Derivative Informed Input Subspace
-		AS_input_projector = np.load(data_dir+'AS_input_projector.npy')
+		files = os.listdir(data_dir)
+		if not ('AS_input_projector.npy' in files):
+			AS_input_file = None
+			for file in files:
+				if ('AS' in file) and ('input_projector.npy') in file:
+					AS_input_file = file
+					print('For input active subspace using ',AS_input_file)
+					break 
+		else:
+			AS_input_file = 'AS_input_projector.npy'
+		AS_input_projector = np.load(data_dir+AS_input_file)
 		if verbose:
 			print('AS input projector shape before truncation = ', AS_input_projector.shape)
 		if fixed_input_rank > 0:
@@ -156,7 +166,17 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 		projector_dictionary['AS_input'] = AS_input_projector
 		################################################################################
 		# Derivative Informed Output Subspace
-		AS_output_projector = np.load(data_dir+'AS_output_projector.npy')
+		if not ('AS_output_projector.npy' in files):
+			AS_output_file = None
+			for file in files:
+				if ('AS' in file) and ('output_projector.npy') in file:
+					AS_output_file = file
+					print('For output derivative subspace, using',AS_output_file)
+					break 
+		else:
+			AS_input_file = 'AS_output_projector.npy'
+
+		AS_output_projector = np.load(data_dir+AS_output_file)
 		
 		if verbose:
 			print('AS output projector shape before truncation = ', AS_output_projector.shape)
@@ -320,7 +340,7 @@ def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,d
 		# Diagonalize sigma here
 		sigma_data_ = np.zeros(sigma_data_.shape + sigma_data_.shape[-1:])
 		for i in range(sigma_data_.shape[0]):
-		    sigma_data_[i] = np.diag(sigma_data[i])
+			sigma_data_[i] = np.diag(sigma_data[i])
 
 		# Shuffle up the ranks?
 		if order_random:
@@ -385,7 +405,7 @@ def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,d
 		if diagonalize_sigma:
 			sigma_new = np.zeros(sigmanew.shape + sigmanew.shape[-1:])
 			for i in range(sigmanew.shape[0]):
-			    sigma_new[i] = np.diag(sigmanew[i])
+				sigma_new[i] = np.diag(sigmanew[i])
 			sigmanew = sigma_new
 
 		Vnew = V_data.transpose((0,2,1)).reshape((n_batch_data,batch_rank,dM)).transpose(0,2,1)
@@ -447,53 +467,53 @@ def train_test_split(data_dict,n_train,seed = 0):
 
 
 def remap_jacobian_data(data_dict):
-    new_dict = {}
-    new_dict['m_data'] = data_dict['m_data']
-    new_dict['q_data'] = data_dict['q_data']
-    
-    U_data = data_dict['U_data']
-    sigma_data = data_dict['sigma_data']
-    V_data = data_dict['V_data']
-    
-    n_data, dQ,rank = U_data.shape
-    _,dM,_ = V_data.shape
-    J_data = np.zeros((n_data,dQ,dM))
-    for i in range(n_data):
-        J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
-    new_dict['J_data'] = J_data
-    return new_dict
+	new_dict = {}
+	new_dict['m_data'] = data_dict['m_data']
+	new_dict['q_data'] = data_dict['q_data']
+	
+	U_data = data_dict['U_data']
+	sigma_data = data_dict['sigma_data']
+	V_data = data_dict['V_data']
+	
+	n_data, dQ,rank = U_data.shape
+	_,dM,_ = V_data.shape
+	J_data = np.zeros((n_data,dQ,dM))
+	for i in range(n_data):
+		J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
+	new_dict['J_data'] = J_data
+	return new_dict
 
 def remap_jacobian_data_with_orth_V(data_dict):
-    new_dict = {}
-    V_data = data_dict['V_data']
-    V_data_new = np.zeros_like(V_data)
-    for i in range(V_data.shape[0]):
-        # print(i)
-        V_data_new[i,:,:] = np.linalg.qr(V_data[i,:,:])[0]
-    new_dict['V_data'] = V_data_new
-    
-    new_dict['m_data'] = data_dict['m_data']
-    new_dict['q_data'] = data_dict['q_data']
-    
-    U_data = data_dict['U_data']
-    sigma_data = data_dict['sigma_data']
-    V_data = data_dict['V_data']
-    
-    n_data, dQ,rank = U_data.shape
-    _,dM,_ = V_data.shape
-    J_data = np.zeros((n_data,dQ,dM))
-    for i in range(n_data):
-        J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
-    new_dict['J_data'] = J_data
-    # For orth conditions
-    # Extra allocation for the sake of clarity with einsums
-    ndata,dQ,dM = J_data.shape
-    JV_data = np.zeros((ndata,dQ,dQ))
-    JV_data[:,:,:] = np.einsum('ijk,ikl->ijl',J_data,V_data)
+	new_dict = {}
+	V_data = data_dict['V_data']
+	V_data_new = np.zeros_like(V_data)
+	for i in range(V_data.shape[0]):
+		# print(i)
+		V_data_new[i,:,:] = np.linalg.qr(V_data[i,:,:])[0]
+	new_dict['V_data'] = V_data_new
+	
+	new_dict['m_data'] = data_dict['m_data']
+	new_dict['q_data'] = data_dict['q_data']
+	
+	U_data = data_dict['U_data']
+	sigma_data = data_dict['sigma_data']
+	V_data = data_dict['V_data']
+	
+	n_data, dQ,rank = U_data.shape
+	_,dM,_ = V_data.shape
+	J_data = np.zeros((n_data,dQ,dM))
+	for i in range(n_data):
+		J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
+	new_dict['J_data'] = J_data
+	# For orth conditions
+	# Extra allocation for the sake of clarity with einsums
+	ndata,dQ,dM = J_data.shape
+	JV_data = np.zeros((ndata,dQ,dQ))
+	JV_data[:,:,:] = np.einsum('ijk,ikl->ijl',J_data,V_data)
 
-    JVVT_data = np.zeros_like(J_data)
-    JVVT_data[:,:,:] = np.einsum('ijk,ilk->ijl',JV_data,V_data)
+	JVVT_data = np.zeros_like(J_data)
+	JVVT_data[:,:,:] = np.einsum('ijk,ilk->ijl',JV_data,V_data)
 
-    new_dict['JVVT_data'] = JVVT_data
-    
-    return new_dict
+	new_dict['JVVT_data'] = JVVT_data
+	
+	return new_dict

@@ -45,10 +45,10 @@ from dino import *
 from dino.inference.inferenceOracle import InferenceOracle
 from dino.evaluation.gradientTests import gradient_error_test
 
-# Import CRD problem specifics
+# Import rdiff problem specifics
 sys.path.append('../../')
-from hyperelasticityModelSettings import hyperelasticity_problem_settings
-from hyperelasticityModelUtilities import hyperelasticity_model_wrapper
+from rdiffModelSettings import rdiff_problem_settings
+from rdiffModelUtilities import rdiff_model_wrapper
 
 try:
 	tf.random.set_seed(0)
@@ -66,14 +66,14 @@ parser.add_argument("-n_samples", dest = 'n_samples',required=False,default = 10
 parser.add_argument("-logging_dir", dest = 'logging_dir',required=False,default = 'postproc/gradients/', help = "input dim",type = str)
 args = parser.parse_args()
 
-problem_settings = hyperelasticity_problem_settings()
+problem_settings = rdiff_problem_settings()
 
 weights_dir = args.weights_dir+args.ndata+'/'
 
 weights_files = os.listdir(weights_dir)
 
 oracle_dictionary = {}
-modelwrapper = hyperelasticity_model_wrapper()
+modelwrapper = rdiff_model_wrapper()
 
 modelwrapper.setUpInverseProblem()
 print('modelwrapper.model.misfit.noise_variance = ', modelwrapper.model.misfit.noise_variance)
@@ -90,15 +90,14 @@ for weights_name in weights_files[:]:
 	evaluate_network = False
 	settings = jacobian_network_settings(problem_settings)
 	settings['depth'] = 6
-	settings['fixed_input_rank'] = 200
-	settings['fixed_output_rank'] = 100
+	settings['fixed_input_rank'] = 50
 	####
 
 	if ('as_dense' in weights_name.lower()) or ('dipnet' in weights_name.lower()):
 		settings['architecture'] = 'rb_dense'
 		if ('10050' in weights_name) or ('100-50' in weights_name):
+			print('100')
 			settings['fixed_input_rank'] = 100
-			settings['fixed_output_rank'] = 50
 
 		evaluate_network = True
 
@@ -106,14 +105,13 @@ for weights_name in weights_files[:]:
 		settings['architecture'] = 'generic_dense'
 		# What is a better way in general to set the input and output dimensions.
 		settings['input_dim'] = args.input_dim
-		settings['output_dim'] = 100
+		settings['output_dim'] = 50
 		evaluate_network = True
 	else:
 		print('Not implemented, passing for now')
 		pass
 
 	if evaluate_network:
-		# try:
 		file_name = weights_dir+weights_name
 		jacobian_network = observable_network_loader(settings, file_name = file_name)	
 		for i in range(2):
@@ -124,8 +122,6 @@ for weights_name in weights_files[:]:
 			print(80*'#')
 
 		oracle_dictionary[weights_name] = InferenceOracle(modelwrapper,jacobian_network)
-		# except:
-		# 	print('There was an issue for ',weights_name)
 
 assert len(oracle_dictionary.keys()) > 1
 
