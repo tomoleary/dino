@@ -32,9 +32,6 @@ import pickle
 sys.path.append( os.environ.get('DINO_PATH'))
 from dino import *
 
-# sys.path.append('../../../dino/')
-# from surrogate_construction import *
-
 # Import hyperelasticity problem specifics
 sys.path.append('../')
 from hyperelasticityModelSettings import hyperelasticity_problem_settings

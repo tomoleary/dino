@@ -1,15 +1,15 @@
-# Instructions for Hyperelasticity problem
+# Instructions for reaction-diffusion problem
 
 ## 1. Generate the training data
 
 
 First in order to generate the training data run one of the following commands:
 
-`python hyperelasticityProblemSetup.py`
+`python rdiffProblemSetup.py`
 
 or with several simultaneous MPI processes:
 
-`python generateHyperelasticity.py`
+`python generateRDiff.py`
 
 The command line arguments `-save_jacobian_data`, `-save_as` are set to `True` (`1`) by default. In order to generate a basis for PCANet (i.e., KLE of the input parameter), additional set the argument `-save_kle` to `True` (`1`). The data will initially be saved to `./data/` in a subfolder that specifies the specifics of the problem. When the data become large, it is also suitable to save them to a different location (e.g. a dedicated storage location) by modifying the location in `hyperelasticityProblemSetup.py`, or simply move the data after the process is complete.
 
