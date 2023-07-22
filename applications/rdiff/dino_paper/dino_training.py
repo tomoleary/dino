@@ -30,7 +30,7 @@ import pickle
 sys.path.append( os.environ.get('DINO_PATH'))
 from dino import *
 
-# Import CRD problem specifics
+# Import rdiff problem specifics
 sys.path.append('../')
 from rdiffModelSettings import rdiff_problem_settings
 

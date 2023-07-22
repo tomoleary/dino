@@ -51,7 +51,7 @@ parser.add_argument('-ny_targets',dest = 'ny_targets',required= False,default = 
 parser.add_argument('-nx',dest = 'nx',required= False,default = 64,help='targets for observable',type = int)
 parser.add_argument('-ny',dest = 'ny',required= False,default = 64,help='targets for observable',type = int)
 parser.add_argument('-gamma',dest = 'gamma',required=False,default = 0.1, help="gamma for matern prior",type=float)
-parser.add_argument('-delta',dest = 'delta',required=False,default = 0.5, help="delta for matern prior",type=float)
+parser.add_argument('-delta',dest = 'delta',required=False,default = 1.0, help="delta for matern prior",type=float)
 parser.add_argument('-formulation',dest = 'formulation',required=False,default = 'confusion', help="formulation name string",type=str)
 parser.add_argument('-save_data',dest = 'save_data',\
 					required= False,default = 0,help='boolean for saving of data',type = int)
@@ -85,7 +85,7 @@ mesh_constructor_comm, collective_comm = splitCommunicators(world,args.nsubdomai
 my_collective = MultipleSamePartitioningPDEsCollective(collective_comm)
 
 # Initialize directories for saving data
-output_directory = 'data/'+args.formulation+'_n_obs_'+str(args.nx_targets*args.ny_targets)+'_g'+str(args.gamma)+'_d'+str(args.delta)+'_nx'+str(args.nx)+'/'
+output_directory = 'data/'+args.formulation+'_nobs_'+str(args.nx_targets*args.ny_targets)+'_g'+str(args.gamma)+'_d'+str(args.delta)+'_nx'+str(args.nx)+'/'
 os.makedirs(output_directory,exist_ok = True)
 save_states_dir = output_directory+'save_states/'
 

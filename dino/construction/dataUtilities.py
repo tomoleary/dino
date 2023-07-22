@@ -140,56 +140,56 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 					kle_tolerance = 1e-4,pod_tolerance = 1e-4,\
 					 fixed_input_rank = 0, fixed_output_rank = 0, mixed_output = True, verbose = False):
 	projector_dictionary = {}
-	try:
-		################################################################################
-		# Derivative Informed Input Subspace
-		files = os.listdir(data_dir)
-		if not ('AS_input_projector.npy' in files):
-			AS_input_file = None
-			for file in files:
-				if ('AS' in file) and ('input_projector.npy') in file:
-					AS_input_file = file
-					print('For input active subspace using ',AS_input_file)
-					break 
-		else:
-			AS_input_file = 'AS_input_projector.npy'
-		AS_input_projector = np.load(data_dir+AS_input_file)
-		if verbose:
-			print('AS input projector shape before truncation = ', AS_input_projector.shape)
-		if fixed_input_rank > 0:
-			AS_input_projector = AS_input_projector[:,:fixed_input_rank]
-		else:
-			AS_input_d = np.load(data_dir+'AS_d_GN.npy')
-			AS_input_projector = AS_input_projector[:,np.where(AS_input_d>as_input_tolerance)[0]]
-		if verbose:
-			print('AS input projector shape after truncation = ', AS_input_projector.shape)
-		projector_dictionary['AS_input'] = AS_input_projector
-		################################################################################
-		# Derivative Informed Output Subspace
-		if not ('AS_output_projector.npy' in files):
-			AS_output_file = None
-			for file in files:
-				if ('AS' in file) and ('output_projector.npy') in file:
-					AS_output_file = file
-					print('For output derivative subspace, using',AS_output_file)
-					break 
-		else:
-			AS_input_file = 'AS_output_projector.npy'
+	# try:
+	################################################################################
+	# Derivative Informed Input Subspace
+	files = os.listdir(data_dir)
+	if not ('AS_input_projector.npy' in files):
+		AS_input_file = None
+		for file in files:
+			if ('AS' in file) and ('input_projector.npy') in file:
+				AS_input_file = file
+				print('For input active subspace using ',AS_input_file)
+				break 
+	else:
+		AS_input_file = 'AS_input_projector.npy'
+	AS_input_projector = np.load(data_dir+AS_input_file)
+	if verbose:
+		print('AS input projector shape before truncation = ', AS_input_projector.shape)
+	if fixed_input_rank > 0:
+		AS_input_projector = AS_input_projector[:,:fixed_input_rank]
+	else:
+		AS_input_d = np.load(data_dir+'AS_d_GN.npy')
+		AS_input_projector = AS_input_projector[:,np.where(AS_input_d>as_input_tolerance)[0]]
+	if verbose:
+		print('AS input projector shape after truncation = ', AS_input_projector.shape)
+	projector_dictionary['AS_input'] = AS_input_projector
+	################################################################################
+	# Derivative Informed Output Subspace
+	if not ('AS_output_projector.npy' in files):
+		AS_output_file = None
+		for file in files:
+			if ('AS' in file) and ('output_projector.npy') in file:
+				AS_output_file = file
+				print('For output derivative subspace, using',AS_output_file)
+				break 
+	else:
+		AS_output_file = 'AS_output_projector.npy'
 
-		AS_output_projector = np.load(data_dir+AS_output_file)
-		
-		if verbose:
-			print('AS output projector shape before truncation = ', AS_output_projector.shape)
-		if fixed_output_rank > 0:
-			AS_output_projector = AS_output_projector[:,:fixed_output_rank]
-		else:
-			AS_output_d = np.load(data_dir+'AS_d_NG.npy')
-			AS_output_projector = AS_output_projector[:,np.where(AS_output_d>as_output_tolerance)[0]]
-		if verbose:
-			print('AS output projector shape after truncation = ', AS_output_projector.shape)
-		projector_dictionary['AS_output'] = AS_output_projector
-	except:
-		print('Active subspaces did not load')
+	AS_output_projector = np.load(data_dir+AS_output_file)
+	
+	if verbose:
+		print('AS output projector shape before truncation = ', AS_output_projector.shape)
+	if fixed_output_rank > 0:
+		AS_output_projector = AS_output_projector[:,:fixed_output_rank]
+	else:
+		AS_output_d = np.load(data_dir+'AS_d_NG.npy')
+		AS_output_projector = AS_output_projector[:,np.where(AS_output_d>as_output_tolerance)[0]]
+	if verbose:
+		print('AS output projector shape after truncation = ', AS_output_projector.shape)
+	projector_dictionary['AS_output'] = AS_output_projector
+	# except:
+	# 	print('Active subspaces did not load')
 	try:
 		################################################################################
 		# KLE Input Subspace
