@@ -51,6 +51,9 @@ def f_accuracy_matrix(y_true, y_pred):
 	return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
 
 def network_training_parameters():
+	"""
+	Settings for training
+	"""
 	opt_parameters = {}
 	# How to weight the least squares losses [l2,h1 seminorm]
 	opt_parameters['loss_weights'] = [1.0,1.0]
@@ -80,6 +83,9 @@ def network_training_parameters():
 
 
 def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True,logger = {}):
+	"""
+	h1 training routines.
+	"""
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
@@ -173,6 +179,9 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	return network
 
 def train_l2_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
+	"""
+	L2 training routines
+	"""
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':

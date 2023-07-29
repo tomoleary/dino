@@ -25,7 +25,7 @@ parser.add_argument("-weights_dir", dest='weights_dir', required=True, help="Wei
 args = parser.parse_args()
 
 
-ndatas = ['16','64','256','1024','4096','7168']
+ndatas = ['16','64','256','1024','4096']
 
 weights_dir = args.weights_dir
 
@@ -35,6 +35,6 @@ for ndata in ndatas:
 
 	warg = ' -weights_dir '+weights_dir
 	narg = ' -ndata '+ndata
-	os.system('python evaluate_network_accuracies.py '+warg+narg)
+	os.system('python evaluate_network_accuracies.py '+warg)
 	os.system('python evaluate_network_gradients.py -logging_dir postproc/gradients/'+warg+narg)
 	os.system('python evaluate_network_jacobians.py -logging_dir postproc/jacobians/'+warg+narg)

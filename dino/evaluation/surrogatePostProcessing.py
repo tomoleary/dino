@@ -29,6 +29,9 @@ from ..construction.dataUtilities import load_data, remap_jacobian_data, remap_j
 
 
 def evaluateJacobianNetwork(settings,jacobian_network = None,file_name = None,split_data = None, data_dir = None):
+	"""
+	Post-processing of Jacobian accuracies
+	"""
 	if jacobian_network is None:
 		if file_name is None and settings['network_name'] is not None:
 			file_name  = settings['weights_dir']+settings['network_name']+'.pkl'

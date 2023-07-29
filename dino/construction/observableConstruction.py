@@ -36,12 +36,13 @@ from .dataUtilities import load_data
 
 
 def observable_network_settings(problem_settings):
-	'''
-	'''
+	"""
+	This defines network settings when used without Jacobians.
+	"""
 	settings = {}
 	
 	# Neural network architecture settings
-	settings['architecture'] = 'as_dense'
+	settings['architecture'] = 'rb_dense'
 	settings['compat_layer'] = True
 	settings['depth'] = 6
 	settings['truncation_dimension'] = 50
@@ -78,8 +79,9 @@ def observable_network_settings(problem_settings):
 
 
 def observable_training_driver(settings,verbose = True):
-	'''
-	'''
+	"""
+	Driver for generic L2 training
+	"""
 	n_data = settings['train_data_size'] + settings['test_data_size']
 	if settings['data_dir'] is None:
 		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
@@ -116,6 +118,8 @@ def observable_training_driver(settings,verbose = True):
 
 def observable_network_loader(settings,file_name = None):
 	"""
+	Loader of the observable network after training is complete. 
+	No Jacobians in this case.
 	"""
 	
 	if file_name is None:

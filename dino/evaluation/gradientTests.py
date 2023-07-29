@@ -23,6 +23,7 @@ import time
 
 def gradient_error_test(oracle_dict,n_samples = 100):
 	"""
+	Error tests for gradient approximations in inverse problems. 
 	"""
 	surrogate_names = list(oracle_dict.keys())
 
@@ -102,6 +103,7 @@ def gradient_error_test(oracle_dict,n_samples = 100):
 
 def gradient_timing_test(oracle_dict,n_samples = 100):
 	"""
+	Gradient timing tests for DINO versus PDE.
 	"""
 	surrogate_names = list(oracle_dict.keys())
 

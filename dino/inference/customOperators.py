@@ -28,6 +28,7 @@ import time
 # more general matrix structures than scalar multiple of identity later on 
 class noiseCovariance:
 	"""
+	Generic noise covariance class (assuming scalar multiple of identity)
 	"""
 	
 	def __init__(self, noise_variance):
@@ -41,6 +42,7 @@ class noiseCovariance:
 
 class noisePrecision:
 	"""
+	Inverse of covariance (based on scalar multiple of identity)
 	"""
 	
 	def __init__(self, noise_variance):
@@ -53,6 +55,7 @@ class noisePrecision:
 
 class JTJfromData:
 	"""
+	Computation of active subspace efficient from Jacobian training data samples.
 	"""
 	def __init__(self, J, noise_precision = None, init_vector_lambda = None):
 		"""

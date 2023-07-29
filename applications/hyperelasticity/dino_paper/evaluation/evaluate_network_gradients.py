@@ -96,9 +96,9 @@ for weights_name in weights_files[:]:
 
 	if ('as_dense' in weights_name.lower()) or ('dipnet' in weights_name.lower()):
 		settings['architecture'] = 'rb_dense'
-		if ('10050' in weights_name) or ('100-50' in weights_name):
+		if ('100100' in weights_name) or ('100-100' in weights_name):
 			settings['fixed_input_rank'] = 100
-			settings['fixed_output_rank'] = 50
+			settings['fixed_output_rank'] = 100
 
 		evaluate_network = True
 

@@ -19,6 +19,23 @@ import numpy as np
 import os
 
 def load_data(data_dir,rescale = False,derivatives = False, n_data = None):
+	"""
+	This function loads in pre-computed training data that assumes the following
+	conventions.
+	
+	(m,q) data
+	The data are saved in files with the name `data_dir`+'mq_on_procX.npz' where
+	X is the process id number for (parallel) data generation.
+	The input ms (model parameters) are labeled 'm_data'
+	The output qs (QoIs) are labeled 'q_data'
+
+	Jacobian data
+	The Jacobian data are saved in `data_dir`+'J_on_procX.npz' where
+	X is the process id number for (parallel) data generation.
+	The singular factors are saved with labels 'U_data', 'sigma_data'
+	'V_data' respectively.
+
+	"""
 	assert os.path.isdir(data_dir)
 	data_files = os.listdir(data_dir)
 	data_files = [data_dir + file for file in data_files]
@@ -139,6 +156,9 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = None):
 def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 					kle_tolerance = 1e-4,pod_tolerance = 1e-4,\
 					 fixed_input_rank = 0, fixed_output_rank = 0, mixed_output = True, verbose = False):
+	"""
+	Load in the projectors used in reduced basis neural operator construction
+	"""
 	projector_dictionary = {}
 	# try:
 	################################################################################
@@ -328,6 +348,9 @@ def shuffle_data(data_dictionary,train_size,val_size,test_size,n_shuffles = 10,s
 def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,diagonalize_sigma = True,\
 				key_map = {'m_data':'m_data','q_data':'q_data','U_data':'U_data','sigma_data':'sigma_data','V_data':'V_data'},\
 					seed = 0,burn_in = 0,verbose = False, independent_sampling = False):
+	"""
+	Utility used to flatten matrix minors used in the matrix-subsampled approximations of the truncated SVD loss.
+	"""
 	assert target_rank%batch_rank == 0
 	batch_factor = int(target_rank/batch_rank)
 	# Load data
@@ -467,6 +490,9 @@ def train_test_split(data_dict,n_train,seed = 0):
 
 
 def remap_jacobian_data(data_dict):
+	"""
+	Compute Jacobian data from singular factors J = USigmaV^T
+	"""
 	new_dict = {}
 	new_dict['m_data'] = data_dict['m_data']
 	new_dict['q_data'] = data_dict['q_data']
@@ -484,6 +510,9 @@ def remap_jacobian_data(data_dict):
 	return new_dict
 
 def remap_jacobian_data_with_orth_V(data_dict):
+	"""
+	Remap Jacobian data into dominant right subspace.
+	"""
 	new_dict = {}
 	V_data = data_dict['V_data']
 	V_data_new = np.zeros_like(V_data)

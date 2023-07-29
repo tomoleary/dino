@@ -21,10 +21,9 @@ from .neuralNetworks import *
 from .dataUtilities import get_projectors
 
 
-# Define procedures for defining networks via POD spectral decay here
-
 def setup_reduced_bases(settings,train_dict,orth_input = True, orth_output = True):
 	"""
+	This function sets up the reduced bases used in reduced basis training
 	"""
 	if settings['architecture'].lower() in ['rb_resnet','rb_dense']:
 
@@ -77,6 +76,7 @@ def setup_reduced_bases(settings,train_dict,orth_input = True, orth_output = Tru
 
 def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolerance = 1e2, max_breadth = 10):
 	"""
+	This function builds POD layer arrays.
 	"""
 	full_matrices = False
 	if truncation_dimension is None:
@@ -101,9 +101,10 @@ def build_POD_layer_arrays(data_dict,truncation_dimension = None, breadth_tolera
 
 def choose_network(settings, projector_dict = None, reduced_input_training = False,
 										reduced_output_training = False):
-	'''
-
-	'''
+	"""
+	This function sets up the neural network model based on
+	a specified architectural choice.
+	"""
 
 	# Load the input and output projectors
 	layer_weights = {}
@@ -197,10 +198,8 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name_prefix = '',\
 								reduced_input_dim = None, reduced_output_dim = None, compat_layer = True):
 	"""
+	This function constructs reduced basis resnets
 	"""
-	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
-	# 									breadth_tolerance = breadth_tolerance,max_breadth = max_breadth)
-
 	pod_resnet = projected_resnet(input_projector = input_projector,last_layer_weights = last_layer_weights,\
 									ranks = ranks,name_prefix = name_prefix,reduced_input_dim = reduced_input_dim,\
 									reduced_output_dim = reduced_output_dim,compat_layer = compat_layer)
@@ -211,9 +210,8 @@ def construct_projected_dense(input_projector, last_layer_weights, depth, name_p
 								reduced_input_dim = None,reduced_output_dim = None,\
 								truncation_dimension = None,compat_layer = True):
 	"""
+	This function constructs reduced basis dense netowrks. 
 	"""
-	# last_layer_weights = build_POD_layer_arrays(data_dict,truncation_dimension = truncation_dimension,\
-	# 									breadth_tolerance = breadth_tolerance,max_breadth = max_breadth)
 	if truncation_dimension is None:
 		if last_layer_weights is not None:
 			truncation_dimension = last_layer_weights[0].shape[0]

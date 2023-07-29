@@ -22,6 +22,7 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 				compat_layer = True, first_layer_trainable = False, last_layer_trainable = False, name_prefix = '',\
 				reduced_input_dim = None,reduced_output_dim = None):
 	"""
+	This function creates networks based on the reduced basis dense architecture
 	"""
 	# Input reduced basis stuff
 	if input_projector is None:
@@ -75,6 +76,7 @@ def projected_dense(input_projector = None,last_layer_weights = None,hidden_laye
 
 def generic_dense(input_dim,output_dim,n_hidden_neurons, name_prefix = ''):
 	"""
+	This creates a generic dense architecture
 	"""
 	assert type(n_hidden_neurons) is list
 
@@ -90,6 +92,7 @@ def generic_dense(input_dim,output_dim,n_hidden_neurons, name_prefix = ''):
 
 def low_rank_layer(input_x,rank = 8,activation = 'softplus',name_prefix = None,zeros = True):
 	"""
+	Low rank layer used in resnet construction
 	"""
 	output_shape = input_x.shape
 	assert len(output_shape) == 2
@@ -120,6 +123,7 @@ def projected_resnet(input_projector,last_layer_weights,ranks = [],compat_layer 
 							first_layer_trainable = False, last_layer_trainable = True, name_prefix = '',\
 						reduced_input_dim = None):
 	"""
+	This function creates a network based on the reduced basis ResNet architecture.
 	"""
 	if input_projector is None:
 		input_data = tf.keras.layers.Input(shape=(reduced_input_dim,), name = name_prefix+'input_data')
@@ -136,8 +140,6 @@ def projected_resnet(input_projector,last_layer_weights,ranks = [],compat_layer 
 	assert len(last_layer_weights[1].shape) == 1
 	assert last_layer_weights[1].shape[0] == output_dim
 	assert hidden_layer_dimensions[-1] == reduced_output_dim
-
-		
 
 	z = input_proj_layer
 	# The question is whether or not to handle a possible dimension mismatch

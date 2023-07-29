@@ -17,6 +17,14 @@ from .jacobianConstruction import *
 
 
 def get_the_data(settings, remapped_data = None, unflattened_data = None, verbose = True):
+	"""
+	This function sets up the training and testing datasets
+
+	When substituting a user defined data setup function 
+	return a dictionary that includes the train_dict, test_dict, settings 
+	and unflattened_train_dict, which can be set to None when only doing reduced
+	basis neural operator training
+	"""
 	################################################################################
 	# Set up training and testing data.
 	unflattened_train_dict = None
@@ -84,8 +92,10 @@ def get_the_data(settings, remapped_data = None, unflattened_data = None, verbos
 
 def prune_the_data(projector_dict,train_dict,test_dict,\
 	 input_pruning = True, output_pruning = True,verbose = False):
-	'''
-	'''
+	"""
+	This file handles the restriction of the training and testing data to 
+	given reduced bases for the inputs and outputs.
+	"""
 	assert input_pruning or output_pruning
 	# Either way the J data gets pruned
 	J_output_already_pruned = False
@@ -178,6 +188,9 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 def setup_the_dino(settings,train_dict,projector_dict = None,\
 				 reduced_input_training = False,reduced_output_training = False,\
 				 no_jacobian = False,reduced_output_Jacobian = False):
+	"""
+	This function sets up the dino network for training
+	"""
 	################################################################################
 	# Set up the neural networks
 	regressor = choose_network(settings,projector_dict,reduced_input_training = reduced_input_training,\
@@ -212,6 +225,9 @@ def setup_the_dino(settings,train_dict,projector_dict = None,\
 
 
 def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict = None,verbose = True):
+	"""
+	This function handles the dino training
+	"""
 	################################################################################
 	# Start the training
 	print('Commencing training'.center(80))
@@ -233,6 +249,11 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 							test_dict,projector_dict,l2_only = False,\
 							reduced_output_Jacobian = False, verbose = False,\
 							logger = {}):
+	"""
+	This function handles the post-processing of the trained dino.
+	This can include the step of re-assembling a reduced basis neural 
+	network after training is performed in the reduced representation.
+	"""
 	for i in range(5):
 		print(80*'#')
 	print('Re-stitching post processing')
@@ -323,8 +344,9 @@ def restitch_and_postprocess(reduced_regressor,settings,train_dict,\
 
 
 def jacobian_training_driver(settings, remapped_data = None, unflattened_data = None, verbose = True):
-	'''
-	'''
+	"""
+	This function handles the complete dino construction process.
+	"""
 	for loss_weight in settings['opt_parameters']['loss_weights']:
 		assert loss_weight >= 0
 	################################################################################

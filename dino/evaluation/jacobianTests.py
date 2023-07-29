@@ -23,6 +23,9 @@ import hippylib as hp
 import hippyflow as hf
 
 def reduce_dict(master_logger,reduction = 'mean'):
+	"""
+	Helper function for dictionary reduction
+	"""
 	reduced_logger = {}
 	for file in master_logger.keys():
 		reduced_logger[file] = {}
@@ -32,7 +35,9 @@ def reduce_dict(master_logger,reduction = 'mean'):
 	return reduced_logger
 
 def compute_jacobian_errors(modelwrapper, oracle_dictionary, n_samples = 100, rank = 50,p = 5):
-	# m_help = modelwrapper.model.generate_vector(hp.PARAMETER)
+	"""
+	Computation of Jacobian and GN-Hessian errors.
+	"""
 
 	master_logger = {}
 	for file in oracle_dictionary.keys():

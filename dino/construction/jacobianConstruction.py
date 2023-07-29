@@ -38,8 +38,9 @@ except:
 
 
 def jacobian_network_settings(problem_settings):
-	'''
-	'''
+	"""
+	Settings dictionary for training with Jacobians
+	"""
 	jacobian_settings = {}
 
 	# Jacobian loss settings
@@ -100,6 +101,8 @@ def jacobian_network_settings(problem_settings):
 
 def equip_model_with_sketched_jacobian(model,batch_rank,name_prefix = ''):
 	"""
+	The method takes a keras model and returns a new model with an additional
+	output for a subspace-sketched Jacobian
 	"""
 	assert len(model.inputs) == 1
 	assert len(model.outputs) == 1
@@ -124,6 +127,8 @@ def equip_model_with_sketched_jacobian(model,batch_rank,name_prefix = ''):
 
 def equip_model_with_full_jacobian(model,name_prefix = ''):
 	"""
+	The method takes a keras model and returns a new model with an additional
+	output for the Jacobian of the map with respect to the inputs
 	"""
 	assert len(model.inputs) == 1
 	assert len(model.outputs) == 1
@@ -149,6 +154,9 @@ def equip_model_with_full_jacobian(model,name_prefix = ''):
 
 def equip_model_with_output_reduced_jacobian(model,reduced_output_basis,name_prefix = ''):
 	"""
+	The method takes a keras model and returns a new model with an additional
+	output for the Jacobian of the map with respect to the inputs
+	that are restricted to only a dominant output subspace.
 	"""
 
 	assert len(model.inputs) == 1

@@ -40,9 +40,7 @@
 
 
 
-# DINO Paper.
-
-The DINO paper.
+# DINO Publications and Manuscripts.
 
 - \[1\] O'Leary-Roseberry, T., Chen P., Villa, U., Ghattas, O.,
 [**Derivative-Informed Neural Operator: An Efficient Framework for High-Dimensional Parametric Derivative Learning**](https://arxiv.org/abs/2206.10745).
@@ -55,7 +53,7 @@ The DINO paper.
 }
 }</pre></details>
 
-The following papers build off of DINO.
+The following use DINO.
 
 - \[2\] Luo, D., O'Leary-Roseberry, T., Chen P., Ghattas, O.,
 [**Efficient PDE-Constrained optimization under high-dimensional uncertainty using derivative-informed neural operators**](https://arxiv.org/abs/2305.20053).

@@ -35,6 +35,6 @@ for ndata in ndatas[:]:
 
 	warg = ' -weights_dir '+weights_dir
 	narg = ' -ndata '+ndata
-	os.system('python evaluate_network_accuracies.py '+warg+narg)
+	os.system('python evaluate_network_accuracies.py '+warg)
 	os.system('python evaluate_network_gradients.py -logging_dir postproc/gradients/'+warg+narg)
 	os.system('python evaluate_network_jacobians.py -logging_dir postproc/jacobians/'+warg+narg)

@@ -103,7 +103,7 @@ for weights_name in weights_files:
 		settings['architecture'] = 'generic_dense'
 		# What is a better way in general to set the input and output dimensions.
 		settings['input_dim'] = args.input_dim
-		settings['output_dim'] = 100
+		settings['output_dim'] = 50
 		evaluate_network = True
 	else:
 		print('Not implemented, passing for now')

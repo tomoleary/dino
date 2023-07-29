@@ -26,6 +26,7 @@ import hippylib as hp
 
 def inferenceOracleSettings(settings = {}):
 	"""
+	Settings for the inference Oracle
 	"""
 
 	# These options are either 'NN' or 'PDE'
@@ -44,6 +45,7 @@ def inferenceOracleSettings(settings = {}):
 
 class InferenceOracle:
 	"""
+	The inference oracle
 	"""
 
 	def __init__(self, hpModelWrapper, neural_operator, settings = inferenceOracleSettings()):
