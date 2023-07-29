@@ -16,14 +16,25 @@
 # Contact: tom.olearyroseberry@utexas.edu
 
 import os
-import numpy as np
 
-gds = [(0.1,0.5)]
+from argparse import ArgumentParser
+# Arguments to be parsed from the command line execution
+parser = ArgumentParser(add_help=True)
+# Weights directory
+parser.add_argument("-weights_dir", dest='weights_dir', required=True, help="Weights directory",type=str)
+args = parser.parse_args()
 
-nxnys = [(64,64)]
 
-for (gamma,delta) in gds:
-	for nx,ny in nxnys:
-		print(80*'#')
-		print(('Running for gd = '+str((gamma,delta))+' nx,ny = '+str((nx,ny))).center(80))
-		os.system('mpirun -n 1 python poissonProblemSetup.py -ninstance 1 -gamma '+str(gamma)+' -delta '+str(delta)+' -nx '+str(nx)+' -ny '+str(ny))
+ndatas = ['16','64','256','1024','4096']
+
+weights_dir = args.weights_dir
+
+os.system('python link_weights.py')
+
+for ndata in ndatas:
+
+	warg = ' -weights_dir '+weights_dir
+	narg = ' -ndata '+ndata
+	os.system('python evaluate_network_accuracies.py '+warg)
+	os.system('python evaluate_network_gradients.py -logging_dir postproc/gradients/'+warg+narg)
+	os.system('python evaluate_network_jacobians.py -logging_dir postproc/jacobians/'+warg+narg)

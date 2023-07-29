@@ -28,12 +28,13 @@ if int(tf.__version__[0]) > 1:
 import time
 import pickle
 
-sys.path.append('../../../dino/')
-from surrogate_construction import *
 
-# Import CRD problem specifics
+sys.path.append( os.environ.get('DINO_PATH'))
+from dino import *
+
+# Import rdiff problem specifics
 sys.path.append('../')
-from poissonModelSettings import poisson_problem_settings
+from rdiffModelSettings import rdiff_problem_settings
 
 try:
 	tf.random.set_seed(0)
@@ -45,10 +46,12 @@ from argparse import ArgumentParser
 # Arguments to be parsed from the command line execution
 parser = ArgumentParser(add_help=True)
 # Architectural parameters
-parser.add_argument("-architecture", dest='architecture',required=False, default = 'as_dense', help="architecture type: as_dense or generic_dense",type=str)
-parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 50, help="rank for input of AS network",type=int)
+parser.add_argument("-architecture", dest='architecture',required=False, default = 'rb_dense', help="architecture type: as_dense or generic_dense",type=str)
+parser.add_argument("-input_basis", dest='input_basis',required=False, default = 'as',  help="input basis: as or kle",type=str)
+parser.add_argument("-output_basis", dest='output_basis',required=False, default = 'jjt',  help="output basis: pod or jjt",type=str)
+parser.add_argument("-fixed_input_rank", dest='fixed_input_rank',required=False, default = 100, help="rank for input of AS network",type=int)
 parser.add_argument("-fixed_output_rank", dest='fixed_output_rank',required=False, default = 50, help="rank for output of AS network",type=int)
-parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 50, help="truncation dimension for low rank networks",type=int)
+parser.add_argument("-truncation_dimension", dest='truncation_dimension',required=False, default = 100, help="truncation dimension for low rank networks",type=int)
 parser.add_argument("-network_name", dest='network_name',required=True,  help="out name for the saved weights",type=str)
 
 # Optimization parameters
@@ -64,22 +67,22 @@ parser.add_argument("-h1_weight", dest='h1_weight',required=False, default = 1.,
 parser.add_argument("-train_full_jacobian", dest='train_full_jacobian',required=False, default = 1,  help="full J",type=int)
 
 
-parser.add_argument("-train_data_size", dest='train_data_size',required=False, default = 15*1024,  help="training data size",type=int)
+parser.add_argument("-train_data_size", dest='train_data_size',required=False, default = 7*1024,  help="training data size",type=int)
 parser.add_argument("-test_data_size", dest='test_data_size',required=False, default = 1024,  help="testing data size",type=int)
 
 args = parser.parse_args()
 
 # jacobian_network = None
-problem_settings = poisson_problem_settings()
+problem_settings = rdiff_problem_settings()
 
 
 settings = jacobian_network_settings(problem_settings)
 
 n_obs = 50
 gamma = 0.1
-delta = 0.5
+delta = 1.0
 nx = 64
-settings['data_dir'] = '../data/poisson_n_obs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
+settings['data_dir'] = '../data/rdiff_nobs_'+str(n_obs)+'_g'+str(gamma)+'_d'+str(delta)+'_nx'+str(nx)+'/'
 
 settings['target_rank'] = args.target_rank
 settings['batch_rank'] = args.batch_rank
@@ -93,8 +96,14 @@ settings['depth'] = 6
 settings['fixed_input_rank'] = args.fixed_input_rank
 settings['fixed_output_rank'] = args.fixed_output_rank
 settings['truncation_dimension'] = args.truncation_dimension
+settings['input_basis'] = args.input_basis
+settings['output_basis'] = args.output_basis
 
 settings['train_full_jacobian'] = args.train_full_jacobian
+settings['opt_parameters']['train_full_jacobian'] = args.train_full_jacobian
+
+settings['reduced_input_training'] = True
+settings['reduced_output_training'] = False
 
 
 if (settings['batch_rank'] == settings['target_rank']):

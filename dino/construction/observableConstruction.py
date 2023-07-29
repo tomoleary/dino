@@ -35,24 +35,24 @@ from .trainingUtilities import *
 from .dataUtilities import load_data
 
 
-
-
-
 def observable_network_settings(problem_settings):
-	'''
-	'''
+	"""
+	This defines network settings when used without Jacobians.
+	"""
 	settings = {}
 	
 	# Neural network architecture settings
-	settings['architecture'] = 'as_dense'
+	settings['architecture'] = 'rb_dense'
+	settings['compat_layer'] = True
 	settings['depth'] = 6
 	settings['truncation_dimension'] = 50
 	settings['layer_rank'] = 8
 	settings['fixed_input_rank'] = 50
 	settings['fixed_output_rank'] = 50
-	settings['input_subspace'] = 'as'
-	settings['output_subspace'] = 'as'
+	settings['input_basis'] = 'as'
+	settings['output_basis'] = 'jjt'
 	settings['name_prefix'] = 'observable_'
+	settings['compat_layer'] = True
 	settings['breadth_tolerance'] = 1e2
 	settings['max_breadth'] = 10
 
@@ -79,12 +79,18 @@ def observable_network_settings(problem_settings):
 
 
 def observable_training_driver(settings,verbose = True):
-	'''
-	'''
+	"""
+	Driver for generic L2 training
+	"""
 	n_data = settings['train_data_size'] + settings['test_data_size']
-	data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
-		'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
-			'_nx'+str(settings['problem_settings']['nx'])+'/'
+	if settings['data_dir'] is None:
+		data_dir = '../data/'+settings['problem_settings']['formulation']+'_n_obs_'+str(settings['problem_settings']['ntargets'])+\
+			'_g'+str(settings['problem_settings']['gamma'])+'_d'+str(settings['problem_settings']['delta'])+\
+				'_nx'+str(settings['problem_settings']['nx'])+'/'
+		settings['data_dir'] = data_dir
+	else:
+		data_dir = settings['data_dir']
+
 	assert os.path.isdir(data_dir), 'Directory does not exist'+data_dir
 	for loss_weight in settings['opt_parameters']['loss_weights']:
 		assert loss_weight >= 0
@@ -96,19 +102,8 @@ def observable_training_driver(settings,verbose = True):
 
 	train_dict, test_dict = train_test_split(all_data,n_train = settings['train_data_size'])
 
-	if settings['architecture'] in ['as_resnet','as_dense']:
-		data_dict_pod = {'input_train':train_dict['m_data'], 'output_train':train_dict['q_data']}
-		last_layer_weights = build_POD_layer_arrays(data_dict_pod,truncation_dimension = settings['truncation_dimension'],\
-										breadth_tolerance = settings['breadth_tolerance'],max_breadth = settings['max_breadth'])
-
-
-		projectors = get_projectors(data_dir,fixed_input_rank = settings['fixed_input_rank'],fixed_output_rank = settings['fixed_output_rank'])
-
-		input_projector,output_projector = modify_projectors(projectors,settings['input_subspace'],settings['output_subspace'])
-
-		projector_dict = {}
-		projector_dict['input'] = input_projector
-		projector_dict['output'] = last_layer_weights
+	if settings['architecture'].lower() in ['rb_resnet','rb_dense']:
+		projector_dict = setup_reduced_bases(settings,train_dict)
 	else:
 		projector_dict = None
 
@@ -123,6 +118,8 @@ def observable_training_driver(settings,verbose = True):
 
 def observable_network_loader(settings,file_name = None):
 	"""
+	Loader of the observable network after training is complete. 
+	No Jacobians in this case.
 	"""
 	
 	if file_name is None:
@@ -141,14 +138,27 @@ def observable_network_loader(settings,file_name = None):
 
 	try:
 		projector_dict = {'input':observable_weights[settings['name_prefix']+'input_proj_layer'][0],\
-							 'output':observable_weights[settings['name_prefix']+'output_layer']}
+						 'output':observable_weights[settings['name_prefix']+'output_layer'][0].T,\
+						 'last_layer_bias':observable_weights[settings['name_prefix']+'output_layer'][1]}
 	except:
 		projector_dict = {}
+
+	use_compat_layer = False
+	for weight_name in observable_weights:
+		if 'compat_layer' in weight_name:
+			use_compat_layer = True
+
+	settings['compat_layer'] = use_compat_layer
 
 
 	observable_network = choose_network(settings,projector_dict)
 
 	for layer in observable_network.layers:
+		print('layer = ',layer.name)
+		try:
+			print('SHAPE = ',observable_weights[layer.name][0].shape)
+		except:
+			print('issue moving on')
 		layer.set_weights(observable_weights[layer.name])
 
 	return observable_network

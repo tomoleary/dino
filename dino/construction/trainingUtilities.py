@@ -50,20 +50,10 @@ def f_accuracy_matrix(y_true, y_pred):
 								/tf.reduce_sum(tf.reduce_sum(tf.square(y_true),axis =-1),axis = -1)
 	return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
 
-def mol_normalized_mse(y_true, y_pred,eps = 1e-8):
-		squared_difference = tf.square(y_true - y_pred)
-		normalized_squared_difference = tf.reduce_mean(squared_difference,axis=-1)\
-										/(tf.reduce_mean(tf.square(y_pred)+eps,axis =-1))
-		return tf.reduce_mean(normalized_squared_difference)
-
-def mol_l2_accuracy(y_true, y_pred,eps = 1e-8):
-	squared_difference = tf.square(y_true - y_pred)
-	normalized_squared_difference = tf.reduce_mean(squared_difference,axis=-1)\
-									/(tf.reduce_mean(tf.square(y_pred),axis =-1)+eps)
-	return 1. - tf.sqrt(tf.reduce_mean(normalized_squared_difference))
-
-
 def network_training_parameters():
+	"""
+	Settings for training
+	"""
 	opt_parameters = {}
 	# How to weight the least squares losses [l2,h1 seminorm]
 	opt_parameters['loss_weights'] = [1.0,1.0]
@@ -86,29 +76,28 @@ def network_training_parameters():
 	opt_parameters['hess_sweeps'] = 10
 	opt_parameters['layer_weights'] = {}
 	opt_parameters['printing_sweep_frequency'] = 0.1
+
+	opt_parameters['callbacks'] = []
 	
 	return opt_parameters
 
 
-def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
+def train_h1_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True,logger = {}):
+	"""
+	h1 training routines.
+	"""
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
 		optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
 	else:
 		raise 'Invalid choice of optimizer'
-	pass
 
 	assert len(opt_parameters['loss_weights']) == len(network.outputs)
-	
-	if opt_parameters['train_full_jacobian']:
-		assert len(network.outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
-	else:
-		assert len(network.outputs) == 2
-		losses = [normalized_mse]+[normalized_mse_matrix]
-		metrics = [l2_accuracy]+[f_accuracy_matrix]
+	assert len(network.outputs) == 2
+	# Specify losses and metrics
+	losses = [normalized_mse]+[normalized_mse_matrix]
+	metrics = [l2_accuracy]+[f_accuracy_matrix]
 
 	network.compile(optimizer=optimizer,loss=losses,loss_weights = opt_parameters['loss_weights'],metrics=metrics)
 	
@@ -141,10 +130,12 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 			print('Before training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
 
+
 	if opt_parameters['train_keras']:
 		network.fit(input_train,output_train,
 					validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
-										batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
+										batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'],\
+										callbacks = opt_parameters['callbacks'])
 
 	if opt_parameters['train_hessianlearn']:
 		import sys,os
@@ -178,14 +169,19 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 		eval_train = network.evaluate(input_train,output_train,verbose=2)
 		eval_train_dict = {out: eval_train[i] for i, out in enumerate(network.metrics_names)}
 		print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
+		logger['l2_train'], logger['h1_train'] = eval_train[3],eval_train[6]
 		if test_dict is not None:
 			eval_test = network.evaluate(input_test,output_test,verbose=2)
 			eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
 			print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+			logger['l2_test'], logger['h1_test'] = eval_test[3],eval_test[6]
 
 	return network
 
 def train_l2_network(network,train_dict,test_dict = None,opt_parameters = network_training_parameters(),verbose = True):
+	"""
+	L2 training routines
+	"""
 	if opt_parameters['keras_opt'] == 'adam':
 		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
 	elif opt_parameters['keras_opt'] == 'sgd':
@@ -213,14 +209,15 @@ def train_l2_network(network,train_dict,test_dict = None,opt_parameters = networ
 
 	network.fit(input_train,output_train,
 				validation_data = test_data,epochs = opt_parameters['keras_epochs'],\
-									batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'])
+									batch_size = opt_parameters['keras_batch_size'],verbose = opt_parameters['keras_verbose'],\
+									callbacks = opt_parameters['callbacks'])
 
 	if verbose:
 		l2_loss_train, l2_acc_train = network.evaluate(input_train,output_train,verbose=2)
 		print('After training: l2 accuracy = ', l2_acc_train)
 		if test_dict is not None:
 			l2_loss_test, l2_acc_test = network.evaluate(input_test,output_test,verbose=2)
-			print('After training: l2accuracy = ', l2_acc_test)
+			print('After training: test l2 accuracy = ', l2_acc_test)
 
 	return network
 

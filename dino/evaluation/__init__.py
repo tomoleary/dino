@@ -15,14 +15,9 @@
 # Author: Tom O'Leary-Roseberry
 # Contact: tom.olearyroseberry@utexas.edu
 
-from .dataUtilities import *
+from .gradientTests import gradient_error_test, gradient_timing_test
 
-from .jacobianConstruction import *
+from .jacobianTests import compute_jacobian_errors
 
-from .neuralNetworks import *
+from .surrogatePostProcessing import evaluateJacobianNetwork
 
-from .neuralNetworkUtilities import *
-
-from .observableConstruction import *
-
-from .trainingUtilities import *

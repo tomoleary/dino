@@ -86,7 +86,7 @@ mesh_constructor_comm, collective_comm = splitCommunicators(world,args.nsubdomai
 my_collective = MultipleSamePartitioningPDEsCollective(collective_comm)
 
 # Initialize directories for saving data
-output_directory = 'data/'+args.formulation+'_n_obs_'+str(args.nx_targets*args.ny_targets)+'_g'+str(args.gamma)+'_d'+str(args.delta)+'_nx'+str(args.nx)+'/'
+output_directory = 'data/'+args.formulation+'_nobs_'+str(args.nx_targets*args.ny_targets)+'_g'+str(args.gamma)+'_d'+str(args.delta)+'_nx'+str(args.nx)+'/'
 os.makedirs(output_directory,exist_ok = True)
 save_states_dir = output_directory+'save_states/'
 

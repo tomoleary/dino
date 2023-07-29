@@ -15,4 +15,6 @@
 # Author: Tom O'Leary-Roseberry
 # Contact: tom.olearyroseberry@utexas.edu
 
-from .construction import *
+from .customOperators import noisePrecision, JTJfromData
+
+from .inferenceOracle import InferenceOracle, inferenceOracleSettings

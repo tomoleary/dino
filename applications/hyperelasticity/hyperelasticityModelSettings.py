@@ -21,9 +21,9 @@ def hyperelasticity_problem_settings(settings = {}):
 	"""
 	"""
 	
-	settings['ntargets'] = 100
+	settings['ntargets'] = 50
 	settings['nx_targets'] = 10
-	settings['ny_targets'] = 10
+	settings['ny_targets'] = 5
 	settings['correlation_length'] = 0.3
 	settings['nx'] = 64
 	settings['ny'] = 64

@@ -18,7 +18,24 @@
 import numpy as np
 import os
 
-def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
+def load_data(data_dir,rescale = False,derivatives = False, n_data = None):
+	"""
+	This function loads in pre-computed training data that assumes the following
+	conventions.
+	
+	(m,q) data
+	The data are saved in files with the name `data_dir`+'mq_on_procX.npz' where
+	X is the process id number for (parallel) data generation.
+	The input ms (model parameters) are labeled 'm_data'
+	The output qs (QoIs) are labeled 'q_data'
+
+	Jacobian data
+	The Jacobian data are saved in `data_dir`+'J_on_procX.npz' where
+	X is the process id number for (parallel) data generation.
+	The singular factors are saved with labels 'U_data', 'sigma_data'
+	'V_data' respectively.
+
+	"""
 	assert os.path.isdir(data_dir)
 	data_files = os.listdir(data_dir)
 	data_files = [data_dir + file for file in data_files]
@@ -59,9 +76,10 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 			appendage_q = npz_data['q_data']
 			m_data = np.concatenate((m_data,appendage_m))
 			q_data = np.concatenate((q_data,appendage_q))
-      
-	if n_data < np.inf:
+	  
+	if n_data is not None:
 		assert type(n_data) is int
+		assert n_data <= m_data.shape[0], 'Requesting too much data, available number: '+str(m_data.shape[0])+', try again'
 		m_data = m_data[:n_data]
 		q_data = q_data[:n_data]
 	if rescale:
@@ -118,7 +136,7 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 				sigma_data = np.concatenate((sigma_data,appendage_sigma))
 				V_data = np.concatenate((V_data,appendage_V))
 
-		if n_data < np.inf:
+		if n_data is not None:
 			assert type(n_data) is int
 			U_data = U_data[:n_data]
 			sigma_data = sigma_data[:n_data]
@@ -138,10 +156,24 @@ def load_data(data_dir,rescale = False,derivatives = False, n_data = np.inf):
 def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 					kle_tolerance = 1e-4,pod_tolerance = 1e-4,\
 					 fixed_input_rank = 0, fixed_output_rank = 0, mixed_output = True, verbose = False):
+	"""
+	Load in the projectors used in reduced basis neural operator construction
+	"""
 	projector_dictionary = {}
+	# try:
 	################################################################################
 	# Derivative Informed Input Subspace
-	AS_input_projector = np.load(data_dir+'AS_input_projector.npy')
+	files = os.listdir(data_dir)
+	if not ('AS_input_projector.npy' in files):
+		AS_input_file = None
+		for file in files:
+			if ('AS' in file) and ('input_projector.npy') in file:
+				AS_input_file = file
+				print('For input active subspace using ',AS_input_file)
+				break 
+	else:
+		AS_input_file = 'AS_input_projector.npy'
+	AS_input_projector = np.load(data_dir+AS_input_file)
 	if verbose:
 		print('AS input projector shape before truncation = ', AS_input_projector.shape)
 	if fixed_input_rank > 0:
@@ -154,7 +186,17 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 	projector_dictionary['AS_input'] = AS_input_projector
 	################################################################################
 	# Derivative Informed Output Subspace
-	AS_output_projector = np.load(data_dir+'AS_output_projector.npy')
+	if not ('AS_output_projector.npy' in files):
+		AS_output_file = None
+		for file in files:
+			if ('AS' in file) and ('output_projector.npy') in file:
+				AS_output_file = file
+				print('For output derivative subspace, using',AS_output_file)
+				break 
+	else:
+		AS_output_file = 'AS_output_projector.npy'
+
+	AS_output_projector = np.load(data_dir+AS_output_file)
 	
 	if verbose:
 		print('AS output projector shape before truncation = ', AS_output_projector.shape)
@@ -166,6 +208,8 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 	if verbose:
 		print('AS output projector shape after truncation = ', AS_output_projector.shape)
 	projector_dictionary['AS_output'] = AS_output_projector
+	# except:
+	# 	print('Active subspaces did not load')
 	try:
 		################################################################################
 		# KLE Input Subspace
@@ -180,6 +224,9 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 		if verbose:
 			print('KLE projector shape after truncation = ', KLE_projector.shape)
 		projector_dictionary['KLE'] = KLE_projector
+	except:
+		print('KLE did not load')
+	try:
 		################################################################################
 		# POD Output Subspace
 		POD_projector = np.load(data_dir+'POD_projector.npy')
@@ -194,66 +241,13 @@ def get_projectors(data_dir,as_input_tolerance=1e-4,as_output_tolerance=1e-4,\
 			print('POD projector shape after truncation = ', POD_projector.shape)
 		projector_dictionary['POD'] = POD_projector
 	except:
-		pass
+		print('Pre-computed POD did not load')
 	return projector_dictionary
 
-def modify_projectors(projectors,input_subspace,output_subspace):
-	# Modify the input projectors
-	assert input_subspace in ['kle','as','random']
 
-	if input_subspace in ['kle','as']:
-		# Always orthogonalize AS and KLE for best results
-		orthogonalize_input = True
-		rescale_input = True
-		if input_subspace == 'kle':
-			input_projector = projectors['KLE']
-		elif input_subspace == 'as':
-			input_projector = projectors['AS_input']
-
-
-		if orthogonalize_input:
-			input_projector,_ = np.linalg.qr(input_projector)
-
-		if rescale_input:
-			# Scaling factor of 10 seemed to perform well for KLE and AS
-			# and this was independent of the projector rank.
-			scale_factor_input = float(input_projector.shape[0])/(32*float(input_projector.shape[-1]))
-			input_projector /= scale_factor_input*np.linalg.norm(input_projector)
-
-	elif input_subspace == 'random':
-		input_projector = np.random.randn(*projectors['KLE'].shape)
-		input_projector,_ = np.linalg.qr(input_projector)
-		scale_factor_input = float(input_projector.shape[0])/(32*float(input_projector.shape[-1]))
-		input_projector /= scale_factor_input*np.linalg.norm(input_projector)
-
-	# Modify the output projectors
-	# It seems that (re)-orthogonalizing the POD vectors
-	# may not improve the neural network.
-	assert output_subspace in ['pod','as','random']
-
-	if output_subspace in ['pod','as']:
-		orthogonalize_output = True
-		rescale_output = True
-		if output_subspace == 'pod':
-			output_projector = projectors['POD']
-		elif output_subspace == 'as':
-			output_projector = projectors['AS_output']
-
-		if orthogonalize_output:
-			output_projector,_ = np.linalg.qr(output_projector)
-
-		if rescale_output:
-			scale_factor_output = 1.
-			output_projector /= scale_factor_output*np.linalg.norm(output_projector)
-
-	if output_subspace == 'random':
-		output_projector = np.random.randn(*projectors['POD'].shape)
-		output_projector /= np.linalg.norm(output_projector)
-
-	return input_projector, output_projector
-
-
+################################################################################
 # Training related data functions
+
 
 def shuffle_single_data(data_dictionary,train_size,val_size,test_size,seed = 0,copy = True,burn_in = 0):
 	"""
@@ -354,6 +348,9 @@ def shuffle_data(data_dictionary,train_size,val_size,test_size,n_shuffles = 10,s
 def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,diagonalize_sigma = True,\
 				key_map = {'m_data':'m_data','q_data':'q_data','U_data':'U_data','sigma_data':'sigma_data','V_data':'V_data'},\
 					seed = 0,burn_in = 0,verbose = False, independent_sampling = False):
+	"""
+	Utility used to flatten matrix minors used in the matrix-subsampled approximations of the truncated SVD loss.
+	"""
 	assert target_rank%batch_rank == 0
 	batch_factor = int(target_rank/batch_rank)
 	# Load data
@@ -366,7 +363,7 @@ def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,d
 		# Diagonalize sigma here
 		sigma_data_ = np.zeros(sigma_data_.shape + sigma_data_.shape[-1:])
 		for i in range(sigma_data_.shape[0]):
-		    sigma_data_[i] = np.diag(sigma_data[i])
+			sigma_data_[i] = np.diag(sigma_data[i])
 
 		# Shuffle up the ranks?
 		if order_random:
@@ -431,7 +428,7 @@ def flatten_data(data_dict,target_rank = 80,batch_rank = 8,order_random = True,d
 		if diagonalize_sigma:
 			sigma_new = np.zeros(sigmanew.shape + sigmanew.shape[-1:])
 			for i in range(sigmanew.shape[0]):
-			    sigma_new[i] = np.diag(sigmanew[i])
+				sigma_new[i] = np.diag(sigmanew[i])
 			sigmanew = sigma_new
 
 		Vnew = V_data.transpose((0,2,1)).reshape((n_batch_data,batch_rank,dM)).transpose(0,2,1)
@@ -462,11 +459,6 @@ def train_test_split(data_dict,n_train,seed = 0):
 	random_state = np.random.RandomState(seed = seed)
 	indices = random_state.permutation(n_data)
 
-	# Instance test and train split
-	# m_train = m_data[indices[:n_train]]
-	# m_test = m_data[indices[n_train:]]
-	# q_train = q_data[indices[:n_train]]
-	# q_test = q_data[indices[n_train:]]
 	m_train = m_data[-n_train:]
 	q_train = q_data[-n_train:]
 
@@ -479,13 +471,6 @@ def train_test_split(data_dict,n_train,seed = 0):
 		sigma_data = data_dict['sigma_data']
 		V_data = data_dict['V_data']
 	
-		# U_train = U_data[indices[:n_train]]
-		# U_test = U_data[indices[n_train:]]
-		# sigma_train = sigma_data[indices[:n_train]]
-		# sigma_test = sigma_data[indices[n_train:]]
-		# V_train = V_data[indices[:n_train]]
-		# V_test = V_data[indices[n_train:]]
-
 		U_train = U_data[-n_train:]
 		sigma_train = sigma_data[-n_train:]
 		V_train = V_data[-n_train:]
@@ -505,53 +490,59 @@ def train_test_split(data_dict,n_train,seed = 0):
 
 
 def remap_jacobian_data(data_dict):
-    new_dict = {}
-    new_dict['m_data'] = data_dict['m_data']
-    new_dict['q_data'] = data_dict['q_data']
-    
-    U_data = data_dict['U_data']
-    sigma_data = data_dict['sigma_data']
-    V_data = data_dict['V_data']
-    
-    n_data, dQ,rank = U_data.shape
-    _,dM,_ = V_data.shape
-    J_data = np.zeros((n_data,dQ,dM))
-    for i in range(n_data):
-        J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
-    new_dict['J_data'] = J_data
-    return new_dict
+	"""
+	Compute Jacobian data from singular factors J = USigmaV^T
+	"""
+	new_dict = {}
+	new_dict['m_data'] = data_dict['m_data']
+	new_dict['q_data'] = data_dict['q_data']
+	
+	U_data = data_dict['U_data']
+	sigma_data = data_dict['sigma_data']
+	V_data = data_dict['V_data']
+	
+	n_data, dQ,rank = U_data.shape
+	_,dM,_ = V_data.shape
+	J_data = np.zeros((n_data,dQ,dM))
+	for i in range(n_data):
+		J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
+	new_dict['J_data'] = J_data
+	return new_dict
 
 def remap_jacobian_data_with_orth_V(data_dict):
-    new_dict = {}
-    V_data = data_dict['V_data']
-    V_data_new = np.zeros_like(V_data)
-    for i in range(V_data.shape[0]):
-        # print(i)
-        V_data_new[i,:,:] = np.linalg.qr(V_data[i,:,:])[0]
-    new_dict['V_data'] = V_data_new
-    
-    new_dict['m_data'] = data_dict['m_data']
-    new_dict['q_data'] = data_dict['q_data']
-    
-    U_data = data_dict['U_data']
-    sigma_data = data_dict['sigma_data']
-    V_data = data_dict['V_data']
-    
-    n_data, dQ,rank = U_data.shape
-    _,dM,_ = V_data.shape
-    J_data = np.zeros((n_data,dQ,dM))
-    for i in range(n_data):
-        J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
-    new_dict['J_data'] = J_data
-    # For orth conditions
-    # Extra allocation for the sake of clarity with einsums
-    ndata,dQ,dM = J_data.shape
-    JV_data = np.zeros((ndata,dQ,dQ))
-    JV_data[:,:,:] = np.einsum('ijk,ikl->ijl',J_data,V_data)
+	"""
+	Remap Jacobian data into dominant right subspace.
+	"""
+	new_dict = {}
+	V_data = data_dict['V_data']
+	V_data_new = np.zeros_like(V_data)
+	for i in range(V_data.shape[0]):
+		# print(i)
+		V_data_new[i,:,:] = np.linalg.qr(V_data[i,:,:])[0]
+	new_dict['V_data'] = V_data_new
+	
+	new_dict['m_data'] = data_dict['m_data']
+	new_dict['q_data'] = data_dict['q_data']
+	
+	U_data = data_dict['U_data']
+	sigma_data = data_dict['sigma_data']
+	V_data = data_dict['V_data']
+	
+	n_data, dQ,rank = U_data.shape
+	_,dM,_ = V_data.shape
+	J_data = np.zeros((n_data,dQ,dM))
+	for i in range(n_data):
+		J_data[i] = U_data[i]@(sigma_data[i]*V_data[i]).T
+	new_dict['J_data'] = J_data
+	# For orth conditions
+	# Extra allocation for the sake of clarity with einsums
+	ndata,dQ,dM = J_data.shape
+	JV_data = np.zeros((ndata,dQ,dQ))
+	JV_data[:,:,:] = np.einsum('ijk,ikl->ijl',J_data,V_data)
 
-    JVVT_data = np.zeros_like(J_data)
-    JVVT_data[:,:,:] = np.einsum('ijk,ilk->ijl',JV_data,V_data)
+	JVVT_data = np.zeros_like(J_data)
+	JVVT_data[:,:,:] = np.einsum('ijk,ilk->ijl',JV_data,V_data)
 
-    new_dict['JVVT_data'] = JVVT_data
-    
-    return new_dict
+	new_dict['JVVT_data'] = JVVT_data
+	
+	return new_dict
