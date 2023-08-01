@@ -19,7 +19,7 @@
 
 With conda
 
-* `conda create -n hippyflow -c uvilla -c conda-forge fenics==2019.1.0 tensorflow matplotlib scipy tensorflow=2.7.0`
+* `conda create -n dino -c uvilla -c conda-forge fenics==2019.1.0 tensorflow=2.7.0 matplotlib scipy`
 
 Assumes that the environmental variables `HIPPYLIB_PATH`, `HIPPYFLOW_PATH` and `DINO_PATH` have been set.
 
