@@ -91,12 +91,14 @@ def get_the_data(settings, remapped_data = None, unflattened_data = None, verbos
 
 
 def prune_the_data(projector_dict,train_dict,test_dict,\
-	 input_pruning = True, output_pruning = True,verbose = False):
+	 input_pruning = True, output_pruning = True,verbose = False,\
+	 check_orthonormality = True):
 	"""
 	This file handles the restriction of the training and testing data to 
 	given reduced bases for the inputs and outputs.
 	"""
 	assert input_pruning or output_pruning
+
 	# Either way the J data gets pruned
 	J_output_already_pruned = False
 	if 'J_data' in train_dict.keys():
@@ -118,6 +120,10 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 	################################################################################
 	# m data
 	if input_pruning:
+		input_projector = projector_dict['input']
+		if check_orthonormality:
+			assert np.linalg.norm(input_projector.T@input_projector - np.eye(input_projector.shape[-1])) < 1e-6
+
 		m_train = train_dict['m_data']
 		m_test = test_dict['m_data']
 		# Save the full data for re-stitching post-process
@@ -126,8 +132,6 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 		if verbose:
 			print('m_train.shape = ',m_train.shape)
 			print('m_test.shape = ',m_test.shape)
-		input_projector = projector_dict['input']
-		if verbose:
 			print('input_projector.shape = ',input_projector.shape)
 		assert input_projector.shape[0] == m_train.shape[1]
 
@@ -150,6 +154,10 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 		test_dict['m_data'] = m_test
 
 	if output_pruning:
+		output_projector = projector_dict['output']
+		last_layer_bias = projector_dict['last_layer_bias']
+		if check_orthonormality:
+			assert np.linalg.norm(output_projector.T@output_projector - np.eye(output_projector.shape[-1])) < 1e-6
 		q_train = train_dict['q_data']
 		q_test = test_dict['q_data']
 		# Save the full data for re-stitching post-process
@@ -158,9 +166,6 @@ def prune_the_data(projector_dict,train_dict,test_dict,\
 		if verbose:
 			print('q_train.shape = ',q_train.shape)
 			print('q_test.shape = ',q_test.shape)
-		output_projector = projector_dict['output']
-		last_layer_bias = projector_dict['last_layer_bias']
-		if verbose:
 			print('output_projector.shape = ',output_projector.shape)
 		assert output_projector.shape[0] == q_train.shape[1]
 
