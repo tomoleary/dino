@@ -153,13 +153,21 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 		KMW.set_optimizer(optimizer,parameters = hess_opt_parameters)
 
 		problem = KMW.problem
-		hess_train_dict = {problem.x[0]:input_train[0],problem.x[1]:input_train[1],problem.x[2]:input_train[2],\
-								problem.y_true[0]:output_train[0],problem.y_true[1]:output_train[1]}
-		if test_dict is not None:
-			hess_val_dict = {problem.x[0]:input_test[0],problem.x[1]:input_test[1],problem.x[2]:input_test[2],\
-									problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
+		if opt_parameters['train_full_jacobian']:
+			hess_train_dict = {problem.x:input_train[0],\
+									problem.y_true[0]:output_train[0],problem.y_true[1]:output_train[1]}
+			if test_dict is not None:
+				hess_val_dict = {problem.x[0]:input_test[0],\
+										problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
+
 		else:
-			hess_val_dict = None
+			hess_train_dict = {problem.x[0]:input_train[0],problem.x[1]:input_train[1],problem.x[2]:input_train[2],\
+									problem.y_true[0]:output_train[0],problem.y_true[1]:output_train[1]}
+			if test_dict is not None:
+				hess_val_dict = {problem.x[0]:input_test[0],problem.x[1]:input_test[1],problem.x[2]:input_test[2],\
+										problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
+			else:
+				hess_val_dict = None
 		data = hess.Data(hess_train_dict,opt_parameters['hess_gbatch_size'],\
 			validation_data = hess_val_dict,hessian_batch_size = opt_parameters['hess_batch_size'])
 		# And finally one can call fit!
