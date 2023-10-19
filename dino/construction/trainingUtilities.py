@@ -66,6 +66,7 @@ def network_training_parameters():
 	opt_parameters['keras_opt'] = 'adam' # choose from adam / SGD / whatever keras optimizers
 	opt_parameters['keras_alpha'] = 1e-3
 	opt_parameters['keras_verbose'] = False
+	opt_parameters['keras_optimizer'] = None
 
 	# Hessianlearn training parameters
 	opt_parameters['train_hessianlearn'] = False
@@ -86,12 +87,15 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	"""
 	h1 training routines.
 	"""
-	if opt_parameters['keras_opt'] == 'adam':
-		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
-	elif opt_parameters['keras_opt'] == 'sgd':
-		optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
+	if opt_parameters['keras_optimizer'] is not None:
+		optimizer = opt_parameters['keras_optimizer']
 	else:
-		raise 'Invalid choice of optimizer'
+		if opt_parameters['keras_opt'] == 'adam':
+			optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
+		elif opt_parameters['keras_opt'] == 'sgd':
+			optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
+		else:
+			raise 'Invalid choice of optimizer'
 
 	assert len(opt_parameters['loss_weights']) == len(network.outputs)
 	assert len(network.outputs) == 2
