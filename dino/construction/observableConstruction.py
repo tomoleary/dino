@@ -69,6 +69,9 @@ def observable_network_settings(problem_settings):
 	settings['batch_size'] = 256
 	settings['hess_batch_size'] = 32
 
+	settings['reduced_input_training'] = False
+	settings['reduced_output_training'] = False
+
 
 	# Problem specific settings are passed in
 	assert type(problem_settings) is dict, 'problem_settings passed in should have type dict'
@@ -151,7 +154,8 @@ def observable_network_loader(settings,file_name = None,verbose = False):
 	settings['compat_layer'] = use_compat_layer
 
 
-	observable_network = choose_network(settings,projector_dict)
+	observable_network = choose_network(settings,projector_dict, reduced_input_training = settings['reduced_input_training'],\
+														reduced_output_training = settings['reduced_output_training'])
 
 	for layer in observable_network.layers:
 		if verbose:
