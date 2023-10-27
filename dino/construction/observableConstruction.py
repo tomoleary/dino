@@ -133,7 +133,7 @@ def observable_network_loader(settings,file_name = None,verbose = False):
 	assert os.path.isfile(file_name), 'Trained weights may not exist as specified: '+str(file_name)
 
 	try:
-		# import pickle
+		import pickle
 		observable_weights = pickle.load(open(file_name,'rb'))
 	except:
 		import pickle5

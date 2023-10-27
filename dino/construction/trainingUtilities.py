@@ -66,15 +66,16 @@ def network_training_parameters():
 	opt_parameters['keras_opt'] = 'adam' # choose from adam / SGD / whatever keras optimizers
 	opt_parameters['keras_alpha'] = 1e-3
 	opt_parameters['keras_verbose'] = False
+	opt_parameters['keras_optimizer'] = None
 
 	# Hessianlearn training parameters
 	opt_parameters['train_hessianlearn'] = False
 	opt_parameters['hessian_low_rank'] = 40
 	opt_parameters['hess_alpha'] = 1e-4
-	opt_parameters['hess_gbatch_size'] = 256
-	opt_parameters['hess_batch_size'] = 32
+	opt_parameters['hess_gbatch_size'] = 32
+	opt_parameters['hess_batch_size'] = 16
 	opt_parameters['hess_sweeps'] = 10
-	opt_parameters['layer_weights'] = {}
+	opt_parameters['layer_weights'] = None
 	opt_parameters['printing_sweep_frequency'] = 0.1
 
 	opt_parameters['callbacks'] = []
@@ -86,12 +87,15 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 	"""
 	h1 training routines.
 	"""
-	if opt_parameters['keras_opt'] == 'adam':
-		optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
-	elif opt_parameters['keras_opt'] == 'sgd':
-		optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
+	if opt_parameters['keras_optimizer'] is not None:
+		optimizer = opt_parameters['keras_optimizer']
 	else:
-		raise 'Invalid choice of optimizer'
+		if opt_parameters['keras_opt'] == 'adam':
+			optimizer = tf.keras.optimizers.Adam(learning_rate = opt_parameters['keras_alpha'])
+		elif opt_parameters['keras_opt'] == 'sgd':
+			optimizer = tf.keras.optimizers.SGD(learning_rate = opt_parameters['keras_alpha'])
+		else:
+			raise 'Invalid choice of optimizer'
 
 	assert len(opt_parameters['loss_weights']) == len(network.outputs)
 	assert len(network.outputs) == 2
@@ -138,12 +142,34 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 										callbacks = opt_parameters['callbacks'])
 
 	if opt_parameters['train_hessianlearn']:
+
+		if opt_parameters['train_keras']:
+			# Check the status prior to switching to hessian training
+			if verbose:
+				eval_train = network.evaluate(input_train,output_train,verbose=2)
+				eval_train_dict = {out: eval_train[i] for i, out in enumerate(network.metrics_names)}
+				print('After training: l2, h1 training accuracies = ', eval_train[3], eval_train[6])
+				logger['l2_train'], logger['h1_train'] = eval_train[3],eval_train[6]
+				if test_dict is not None:
+					eval_test = network.evaluate(input_test,output_test,verbose=2)
+					eval_test_dict = {out: eval_test[i] for i, out in enumerate(network.metrics_names)}
+					print('After training: l2, h1 testing accuracies =  ', eval_test[3], eval_test[6])
+					logger['l2_test'], logger['h1_test'] = eval_test[3],eval_test[6]
+
 		import sys,os
 		sys.path.append( os.environ.get('HESSIANLEARN_PATH'))
 		import hessianlearn as hess
 		KMWSettings = hess.KerasModelWrapperSettings()
 		KMWSettings['max_sweeps'] = opt_parameters['hess_sweeps']
-		KMWSettings['layer_weights'] = opt_parameters['layer_weights']
+		if opt_parameters['layer_weights'] is None:
+			# Set last weights
+			layer_weights = {}
+			for layer in network.layers:
+				layer_weights[layer.name] = layer.get_weights()
+		else:
+			layer_weights = opt_parameters['layer_weights']
+
+		KMWSettings['layer_weights'] = layer_weights
 		KMWSettings['printing_sweep_frequency'] = opt_parameters['printing_sweep_frequency']
 		KMW = hess.KerasModelWrapper(network,settings = KMWSettings)
 		optimizer = hess.LowRankSaddleFreeNewton # The class constructor, not an instance
@@ -152,12 +178,13 @@ def train_h1_network(network,train_dict,test_dict = None,opt_parameters = networ
 		hess_opt_parameters['alpha'] = opt_parameters['hess_alpha']
 		KMW.set_optimizer(optimizer,parameters = hess_opt_parameters)
 
+
 		problem = KMW.problem
 		if opt_parameters['train_full_jacobian']:
 			hess_train_dict = {problem.x:input_train[0],\
 									problem.y_true[0]:output_train[0],problem.y_true[1]:output_train[1]}
 			if test_dict is not None:
-				hess_val_dict = {problem.x[0]:input_test[0],\
+				hess_val_dict = {problem.x:input_test[0],\
 										problem.y_true[0]:output_test[0],problem.y_true[1]:output_test[1]}
 
 		else:
