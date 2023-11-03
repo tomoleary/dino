@@ -229,7 +229,7 @@ def setup_the_dino(settings,train_dict,projector_dict = None,\
 	return regressor
 
 
-def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict = None,verbose = True):
+def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict = None,verbose = True,logger = {}):
 	"""
 	This function handles the dino training
 	"""
@@ -243,10 +243,10 @@ def train_dino(settings, regressor,train_dict,test_dict,unflattened_train_dict =
 			if verbose:
 				print(('Running inner iteration '+str(epoch)).center(80))
 			train_dict = flatten_data(unflattened_train_dict,target_rank = settings['target_rank'],batch_rank = settings['batch_rank'],order_random = True,burn_in = epoch)
-			regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'],verbose = True)
+			regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'],verbose = True,logger=logger)
 		pass
 	else:
-		regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'])
+		regressor = train_h1_network(regressor,train_dict,test_dict,opt_parameters = settings['opt_parameters'], logger = logger)
 
 	return regressor
 
