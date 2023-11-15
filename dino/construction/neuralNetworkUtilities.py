@@ -117,43 +117,10 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 	network_name_prefix = settings['name_prefix']
 
-	if architecture.lower() == 'rb_resnet':
+	if architecture.lower() in  ['rb_resnet','rb_dense']:
 		print(80*'#')
 		input_basis = settings['input_basis']
 		output_basis = settings['output_basis']
-		print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' ResNet').center(80))
-
-		ranks = depth*[settings['layer_rank']]
-
-		if reduced_input_training:
-			input_projector = None
-			assert settings['reduced_input_dim'] is not None
-		else:
-			input_projector = projector_dict['input']
-			layer_weights[network_name_prefix+'input_proj_layer'] = [input_projector]
-
-		if reduced_output_training:
-			last_layer_weights = None
-			assert settings['reduced_output_dim'] is not None
-		else:
-			input_projector = projector_dict['output']
-			last_layer_weights = [projector_dict['output'].T, projector_dict['last_layer_bias']]
-			layer_weights[network_name_prefix+'output_layer'] = last_layer_weights
-
-		reduced_input_dim = settings['reduced_input_dim']
-		reduced_output_dim = settings['reduced_output_dim']
-		regressor, last_layer_weights = construct_projected_resnet(input_projector, last_layer_weights, ranks,\
-											  name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
-											 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'])
-
-
-	elif architecture.lower() == 'rb_dense':
-		print(80*'#')
-		input_basis = settings['input_basis']
-		output_basis = settings['output_basis']
-
-		print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' Dense').center(80))
-		hidden_layer_dimensions = 2*[truncation_dimension]
 
 		if reduced_input_training:
 			input_projector = None
@@ -172,11 +139,22 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 		reduced_input_dim = settings['reduced_input_dim']
 		reduced_output_dim = settings['reduced_output_dim']
-		
-		regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, depth,\
-											 name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
-											 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'])
 
+		if architecture.lower() == 'rb_resnet':
+			print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' ResNet').center(80))
+			ranks = depth*[settings['layer_rank']]
+			regressor, last_layer_weights = construct_projected_resnet(input_projector, last_layer_weights, ranks,\
+												  name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
+												 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'],\
+												 activation = settings['activation'])
+
+		elif architecture.lower() == 'rb_dense':
+			print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' Dense').center(80))
+			hidden_layer_dimensions = 2*[truncation_dimension]
+			regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, depth,\
+												 name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
+												 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'],\
+												 activation = settings['activation'])
 
 	elif architecture == 'generic_dense':
 		print(80*'#')
@@ -186,7 +164,7 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 		input_dim = settings['input_dim']
 		output_dim = settings['output_dim']
 		truncation_dimension = settings['truncation_dimension']
-		regressor = generic_dense(input_dim,output_dim,depth*[truncation_dimension])
+		regressor = generic_dense(input_dim,output_dim,depth*[truncation_dimension],activation = settings['activation'])
 
 	else:
 		# print('Architecture: ',architecture,' not supported!')
@@ -196,19 +174,21 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 
 def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name_prefix = '',\
-								reduced_input_dim = None, reduced_output_dim = None, compat_layer = True):
+								reduced_input_dim = None, reduced_output_dim = None, compat_layer = True,\
+								activation = 'softplus'):
 	"""
 	This function constructs reduced basis resnets
 	"""
 	pod_resnet = projected_resnet(input_projector = input_projector,last_layer_weights = last_layer_weights,\
 									ranks = ranks,name_prefix = name_prefix,reduced_input_dim = reduced_input_dim,\
-									reduced_output_dim = reduced_output_dim,compat_layer = compat_layer)
+									reduced_output_dim = reduced_output_dim,compat_layer = compat_layer,\
+									activation = activation)
 
 	return pod_resnet, last_layer_weights
 
 def construct_projected_dense(input_projector, last_layer_weights, depth, name_prefix = '',\
 								reduced_input_dim = None,reduced_output_dim = None,\
-								truncation_dimension = None,compat_layer = True):
+								truncation_dimension = None,compat_layer = True,activation='softplus'):
 	"""
 	This function constructs reduced basis dense netowrks. 
 	"""
@@ -228,7 +208,7 @@ def construct_projected_dense(input_projector, last_layer_weights, depth, name_p
 	pod_dense_network = projected_dense(input_projector=input_projector	,last_layer_weights = last_layer_weights,\
 									hidden_layer_dimensions = depth*[truncation_dimension],name_prefix = name_prefix,\
 									reduced_input_dim = reduced_input_dim,reduced_output_dim = reduced_output_dim,\
-									compat_layer = compat_layer)
+									compat_layer = compat_layer,activation = activation)
 
 	return pod_dense_network, last_layer_weights
 

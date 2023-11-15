@@ -62,6 +62,7 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['breadth_tolerance'] = 1e2
 	jacobian_settings['max_breadth'] = 10
 	jacobian_settings['compat_layer'] = True
+	jacobian_settings['activation'] = 'softplus'
 
 	jacobian_settings['input_dim'] = None
 	jacobian_settings['output_dim'] = None
