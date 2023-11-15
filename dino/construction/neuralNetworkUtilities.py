@@ -150,8 +150,8 @@ def choose_network(settings, projector_dict = None, reduced_input_training = Fal
 
 		elif architecture.lower() == 'rb_dense':
 			print(('Loading '+input_basis.upper()+'-'+output_basis.upper()+' Dense').center(80))
-			hidden_layer_dimensions = 2*[truncation_dimension]
-			regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, depth,\
+			# hidden_layer_dimensions = 2*[truncation_dimension]
+			regressor, last_layer_weights = construct_projected_dense(input_projector, last_layer_weights, hidden_layer_dimensions = settings['hidden_layer_dimensions'],\
 												 name_prefix = network_name_prefix,reduced_input_dim = reduced_input_dim,\
 												 reduced_output_dim = reduced_output_dim, compat_layer = settings['compat_layer'],\
 												 activation = settings['activation'])
@@ -186,27 +186,27 @@ def construct_projected_resnet(input_projector, last_layer_weights, ranks,  name
 
 	return pod_resnet, last_layer_weights
 
-def construct_projected_dense(input_projector, last_layer_weights, depth, name_prefix = '',\
+def construct_projected_dense(input_projector, last_layer_weights, hidden_layer_dimensions, name_prefix = '',\
 								reduced_input_dim = None,reduced_output_dim = None,\
-								truncation_dimension = None,compat_layer = True,activation='softplus'):
+								compat_layer = True,activation='softplus'):
 	"""
 	This function constructs reduced basis dense netowrks. 
 	"""
-	if truncation_dimension is None:
-		if last_layer_weights is not None:
-			truncation_dimension = last_layer_weights[0].shape[0]
-		elif reduced_input_dim is not None:
-			print('Assuming that truncation_dimension is reduced input dimension')
-			truncation_dimension = reduced_input_dim
-		elif reduced_output_dim is not None:
-			print('Assuming that truncation_dimension is reduced output dimension')
-			truncation_dimension = reduced_output_dim
-		else:
-			print('truncation_dimension must be specified, or inferrable in some way.')
-			raise 
+	# if truncation_dimension is None:
+	# 	if last_layer_weights is not None:
+	# 		truncation_dimension = last_layer_weights[0].shape[0]
+	# 	elif reduced_input_dim is not None:
+	# 		print('Assuming that truncation_dimension is reduced input dimension')
+	# 		truncation_dimension = reduced_input_dim
+	# 	elif reduced_output_dim is not None:
+	# 		print('Assuming that truncation_dimension is reduced output dimension')
+	# 		truncation_dimension = reduced_output_dim
+	# 	else:
+	# 		print('truncation_dimension must be specified, or inferrable in some way.')
+	# 		raise 
 
 	pod_dense_network = projected_dense(input_projector=input_projector	,last_layer_weights = last_layer_weights,\
-									hidden_layer_dimensions = depth*[truncation_dimension],name_prefix = name_prefix,\
+									hidden_layer_dimensions = hidden_layer_dimensions,name_prefix = name_prefix,\
 									reduced_input_dim = reduced_input_dim,reduced_output_dim = reduced_output_dim,\
 									compat_layer = compat_layer,activation = activation)
 

@@ -46,6 +46,7 @@ def observable_network_settings(problem_settings):
 	settings['compat_layer'] = True
 	settings['depth'] = 6
 	settings['truncation_dimension'] = 50
+	settings['hidden_layer_dimensios'] = settings['depth']*[settings['truncation_dimension']]
 	settings['layer_rank'] = 8
 	settings['fixed_input_rank'] = 50
 	settings['fixed_output_rank'] = 50

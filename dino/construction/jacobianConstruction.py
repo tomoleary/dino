@@ -53,6 +53,7 @@ def jacobian_network_settings(problem_settings):
 	jacobian_settings['compat_layer'] = True
 	jacobian_settings['depth'] = 6
 	jacobian_settings['truncation_dimension'] = 50
+	jacobian_settings['hidden_layer_dimensios'] = jacobian_settings['depth']*[jacobian_settings['truncation_dimension']]
 	jacobian_settings['layer_rank'] = 8
 	jacobian_settings['fixed_input_rank'] = 50
 	jacobian_settings['fixed_output_rank'] = 50
