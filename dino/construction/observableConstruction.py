@@ -46,7 +46,7 @@ def observable_network_settings(problem_settings):
 	settings['compat_layer'] = True
 	settings['depth'] = 6
 	settings['truncation_dimension'] = 50
-	settings['hidden_layer_dimensios'] = settings['depth']*[settings['truncation_dimension']]
+	settings['hidden_layer_dimensions'] = settings['depth']*[settings['truncation_dimension']]
 	settings['layer_rank'] = 8
 	settings['fixed_input_rank'] = 50
 	settings['fixed_output_rank'] = 50
@@ -154,7 +154,7 @@ def observable_network_loader(settings,file_name = None,verbose = False):
 
 	settings['compat_layer'] = use_compat_layer
 
-
+	assert 'hidden_layer_dimensions' in settings.keys()
 	observable_network = choose_network(settings,projector_dict, reduced_input_training = settings['reduced_input_training'],\
 														reduced_output_training = settings['reduced_output_training'])
 
