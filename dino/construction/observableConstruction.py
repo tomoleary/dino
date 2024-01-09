@@ -157,6 +157,8 @@ def observable_network_loader(settings,file_name = None,verbose = False):
 	assert 'hidden_layer_dimensions' in settings.keys()
 	observable_network = choose_network(settings,projector_dict, reduced_input_training = settings['reduced_input_training'],\
 														reduced_output_training = settings['reduced_output_training'])
+	if verbose:
+		observable_network.summary()
 
 	for layer in observable_network.layers:
 		if verbose:
